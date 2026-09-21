@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use scruple in published research, please cite it."
+title: "scruple: calibrated deductive coding with abstention and a class-conditional reliability guarantee"
+abstract: >-
+  scruple codes a text corpus against a researcher-written codebook, abstains on
+  items whose calibrated probability falls in an uncertain band, and reports
+  inter-rater reliability of the delivered dataset against a blind human gold
+  sample with a class-conditional (Mondrian) error guarantee.
+type: software
+authors:
+  - family-names: "PLACEHOLDER"
+    given-names: "PLACEHOLDER"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+version: 0.1.0
+date-released: "2026-09-21"
+license: MIT
+repository-code: "https://github.com/scruple-tool/scruple"
+keywords:
+  - qualitative research
+  - content analysis
+  - inter-rater reliability
+  - calibration
+  - selective prediction

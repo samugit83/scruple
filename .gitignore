@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.mutmut-cache
+
+# scruple project state: never commit a corpus or a gold sample.
+.scruple/
+out/
+bench/data/
+bench/results/
+!bench/results/.gitkeep
+
+.DS_Store
+.idea/
+.vscode/
