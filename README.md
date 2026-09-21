@@ -260,4 +260,4 @@ that the design's kill criterion rests on has not been run against published
 qualitative-coding corpora, so the headline claim above is demonstrated on a
 synthetic corpus with a real model, not yet on the literature's datasets.
 
-Licence: MIT.
+Licence: MIT. Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
