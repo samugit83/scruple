@@ -64,7 +64,7 @@ def cohens_kappa_from_confusion(cm: Confusion, *, n_items: int | None = None) ->
     order to judge how much evidence there is.
     """
     n = cm.n
-    reported_n = n_items if n_items is not None else int(round(n))
+    reported_n = n_items if n_items is not None else round(n)
     if n <= 0:
         return Estimate(value=None, n=reported_n, reason=ReasonCode.EMPTY_INPUT)
 
@@ -106,7 +106,7 @@ def krippendorff_alpha_from_confusion(cm: Confusion, *, n_items: int | None = No
         alpha = 1 - D_o / D_e = 1 - (b + c)(2N - 1) / (n_1 * n_0)
     """
     n = cm.n
-    reported_n = n_items if n_items is not None else int(round(n))
+    reported_n = n_items if n_items is not None else round(n)
     n_total = 2.0 * n
     if n_total <= 1.0:
         # Fewer than one pairable value: there is nothing to build a chance

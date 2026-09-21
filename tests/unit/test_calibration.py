@@ -140,3 +140,10 @@ class TestReliabilityDiagram:
         bins = reliability_diagram([], [])
         assert len(bins) == 10
         assert all(b.count == 0 for b in bins)
+
+
+class TestZeroWeightPaths:
+    def test_ece_with_zero_total_weight(self) -> None:
+        est = expected_calibration_error([0.5, 0.9], [1, 0], weights=[0.0, 0.0])
+        assert est.value is None
+        assert est.reason is ReasonCode.ZERO_WEIGHT

@@ -15,6 +15,7 @@ import numpy as np
 import numpy.typing as npt
 
 FloatArray = npt.NDArray[np.float64]
+BoolArray = npt.NDArray[np.bool_]
 
 
 def normalise_weights(weights: Sequence[float] | FloatArray | None, n: int) -> FloatArray:

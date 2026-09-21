@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, replace
-from enum import Enum
+from enum import StrEnum
 
 
-class ReasonCode(str, Enum):
+class ReasonCode(StrEnum):
     """Why a statistic is undefined, or why a code cannot be certified.
 
     These strings surface in ``--json`` output, which §13.1 makes a public
@@ -34,11 +34,14 @@ class ReasonCode(str, Enum):
     ALL_ABSTAINED = "ALL_ABSTAINED"
     """The band accepted nothing, so there is no decided subset to score."""
 
+    BELOW_PUBLICATION_BAR = "BELOW_PUBLICATION_BAR"
+    """Thresholds controlled per-class risk, but held-out kappa misses the 0.70 bar."""
+
     ZERO_WEIGHT = "ZERO_WEIGHT"
     """Every sampling weight was zero, so no weighted estimate exists."""
 
 
-class Verdict(str, Enum):
+class Verdict(StrEnum):
     """Per-code outcome of ``scruple check`` (plan §12)."""
 
     OK = "ok"

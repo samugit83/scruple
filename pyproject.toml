@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Qualitative coding that codes what it's sure of, refuses the rest, and proves both."
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ name = "scruple contributors" }]
 keywords = [
     "qualitative-research",
@@ -21,7 +21,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -72,7 +71,7 @@ packages = ["src/scruple"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 src = ["src", "tests", "bench"]
 
 [tool.ruff.lint]
@@ -80,10 +79,15 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "PT", "SIM", "RUF"]
 ignore = ["N818"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["E501"]
+# PT018: narrowing asserts (`x is not None and y is not None`) exist to satisfy
+# mypy before dereferencing; splitting them adds noise without adding signal.
+"tests/**" = ["E501", "PT018"]
+"bench/**" = ["E501", "T201"]
 
 [tool.mypy]
-python_version = "3.10"
+# Deliberately not pinned: numpy and scipy ship stubs that use syntax newer than
+# the package floor, so mypy targets whichever interpreter the CI matrix entry is
+# running. ruff's target-version enforces the floor's syntax instead.
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
