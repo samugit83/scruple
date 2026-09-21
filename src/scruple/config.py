@@ -55,6 +55,15 @@ class EngineConfig(_Strict):
     budget_usd: float = Field(default=5.0, ge=0.0)
     max_retries: int = Field(default=5, ge=0, le=20)
 
+    # §10.1 requires a cost estimate before a run can surprise someone with a
+    # bill. Prices are configuration rather than constants on purpose: a table
+    # of per-model prices baked into the package would be wrong within months,
+    # and §13.2 asks that this still install cleanly in three years. Left unset,
+    # the gate reports tokens and calls and says the cost is unknown.
+    price_per_million_input: float | None = Field(default=None, ge=0.0)
+    price_per_million_output: float | None = Field(default=None, ge=0.0)
+    confirm_above_calls: int = Field(default=500, ge=0)
+
 
 class GoldConfig(_Strict):
     n: int = Field(default=300, ge=1)
@@ -165,6 +174,11 @@ backend:
 engine:
   concurrency: 16
   budget_usd: 5.0    # a run projected above this asks before spending
+  # Your backend's prices, so the cost gate can quote money rather than tokens.
+  # Left unset, scruple reports estimated tokens and calls and says so.
+  # price_per_million_input: 2.50
+  # price_per_million_output: 10.00
+  confirm_above_calls: 500
 
 gold:
   n: 300
