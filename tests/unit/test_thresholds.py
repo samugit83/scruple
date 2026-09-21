@@ -8,6 +8,7 @@ walk, and the two hard gates.
 from __future__ import annotations
 
 from dataclasses import replace
+from itertools import pairwise
 
 import numpy as np
 import pytest
@@ -20,11 +21,13 @@ from scruple.stats.thresholds import (
     MIN_POSITIVE_INSTANCES,
     PUBLICATION_KAPPA,
     ThresholdPair,
+    candidate_weights,
     class_risk,
     default_grid,
     evaluate_candidate,
     fit_thresholds,
     grade,
+    minimum_accepted,
     order_by_conservatism,
     realised_class_risk,
 )
@@ -215,12 +218,14 @@ class TestFitThresholds:
         best = max(c.coverage for c in sel.candidates if c.valid)
         assert sel.coverage == pytest.approx(best)
 
-    def test_ties_on_coverage_go_to_the_wider_band(self) -> None:
-        # Every band here accepts the same items, so the extra width costs
-        # nothing and is the safer choice on data the fit has not seen.
+    def test_ties_on_coverage_go_to_the_wider_of_the_valid_bands(self) -> None:
+        # Among bands that accept the same items, the extra width costs nothing
+        # and is the safer choice on data the fit has not seen.
         probs, gold = _clean_coder(n_pos=300, n_neg=600, err_pos=5, err_neg=3)
         sel = fit_thresholds(probs, gold)
-        assert sel.selected == default_grid()[0]
+        valid = [c for c in sel.candidates if c.valid]
+        widest = max(valid, key=lambda c: (c.coverage, c.pair.band_width))
+        assert sel.selected == widest.pair
 
     def test_fewer_than_fifteen_positives_is_refused(self) -> None:
         # §8.5 hard gate: reporting a confident-looking kappa on nine items is
@@ -313,18 +318,49 @@ class TestFitThresholds:
         probs, gold = _clean_coder(n_pos=300, n_neg=600, err_pos=5, err_neg=3)
         sel = fit_thresholds(probs, gold)
         assert len(sel.candidates) == len(default_grid())
-        assert all(c.valid for c in sel.candidates)
+        assert any(c.valid for c in sel.candidates)
 
-    def test_the_grid_correction_is_bonferroni_over_its_candidates(self) -> None:
+    def test_the_correction_is_weighted_toward_the_highest_coverage_band(self) -> None:
+        """§8.6, `_WHY_WEIGHTED`: a flat split of delta across the grid nearly
+        doubles the gold sample a researcher must hand-code, for grid resolution
+        they did not ask for. The band the selection rule prefers gets delta/2."""
         probs, gold = _clean_coder(n_pos=300, n_neg=600, err_pos=5, err_neg=3)
         sel = fit_thresholds(probs, gold, delta=0.05)
-        assert sel.delta_per_candidate == pytest.approx(0.05 / len(default_grid()))
+        assert sel.delta_per_candidate == pytest.approx(0.025)
 
-    def test_a_smaller_grid_gets_a_weaker_correction(self) -> None:
-        # Each extra candidate is paid for by every other candidate.
+        shares = {c.pair.band_width: c.delta_share for c in sel.candidates}
+        assert shares[min(shares)] > shares[max(shares)]
+        assert sum(shares.values()) == pytest.approx(0.05)
+
+    def test_a_single_candidate_grid_spends_the_whole_budget_on_it(self) -> None:
         probs, gold = _clean_coder(n_pos=300, n_neg=600, err_pos=5, err_neg=3)
-        small = fit_thresholds(probs, gold, grid=[ThresholdPair(0.05, 0.95)])
-        assert small.delta_per_candidate > fit_thresholds(probs, gold).delta_per_candidate
+        single = fit_thresholds(probs, gold, grid=[ThresholdPair(0.05, 0.95)], delta=0.05)
+        assert single.delta_per_candidate == pytest.approx(0.05)
+
+    def test_a_perfect_coder_on_too_small_a_sample_is_told_what_is_missing(self) -> None:
+        """A backend that makes no errors at all can still fail certification,
+        because the gold sample does not hold enough accepted items for the
+        binomial tail to clear the confidence level. Reporting that as merely
+        "not automatable" would be a defect: the researcher can fix it."""
+        probs, gold = _clean_coder(n_pos=20, n_neg=40, err_pos=0, err_neg=0)
+        sel = fit_thresholds(probs, gold)
+        assert sel.verdict is Verdict.NOT_AUTOMATABLE
+        shortfall = sel.evidence_shortfall
+        assert shortfall is not None
+        observed, needed = shortfall
+        assert observed == 20
+        assert needed == minimum_accepted(0.05, sel.delta_per_candidate)
+        assert "made no errors" in sel.message
+        assert str(needed) in sel.message
+
+    def test_a_genuinely_wrong_coder_is_not_told_to_collect_more_gold(self) -> None:
+        # The diagnosis must distinguish "too little evidence" from "too many
+        # errors", or it sends people to hand-code hundreds more items for
+        # nothing.
+        probs, gold = _clean_coder(n_pos=300, n_neg=600, err_pos=90, err_neg=180)
+        sel = fit_thresholds(probs, gold)
+        assert sel.evidence_shortfall is None
+        assert "coders" in sel.message
 
     def test_alpha_and_delta_are_recorded_for_the_report(self) -> None:
         probs, gold = _clean_coder(n_pos=300, n_neg=600, err_pos=5, err_neg=3)
@@ -501,3 +537,39 @@ class TestSelectionMessage:
     def test_a_passing_code_has_nothing_to_explain(self) -> None:
         probs, gold = _clean_coder(n_pos=300, n_neg=600, err_pos=5, err_neg=3)
         assert fit_thresholds(probs, gold).message == ""
+
+
+class TestEvidenceArithmetic:
+    """The relationship a researcher needs in order to plan a gold sample."""
+
+    @pytest.mark.parametrize(
+        ("alpha", "delta_share", "expected"),
+        [(0.05, 0.05, 59), (0.05, 0.025, 72), (0.10, 0.05, 29), (0.02, 0.05, 149)],
+    )
+    def test_minimum_accepted_items(self, alpha: float, delta_share: float, expected: int) -> None:
+        assert minimum_accepted(alpha, delta_share) == expected
+
+    def test_the_bound_is_exactly_where_the_binomial_tail_crosses(self) -> None:
+        needed = minimum_accepted(0.05, 0.05)
+        assert binom.cdf(0, needed, 0.05) <= 0.05
+        assert binom.cdf(0, needed - 1, 0.05) > 0.05
+
+    @pytest.mark.parametrize(
+        ("alpha", "delta_share"), [(0.0, 0.05), (1.0, 0.05), (0.05, 0.0), (0.05, 1.0)]
+    )
+    def test_invalid_inputs_are_refused(self, alpha: float, delta_share: float) -> None:
+        with pytest.raises(ValueError, match="must lie in"):
+            minimum_accepted(alpha, delta_share)
+
+    def test_weights_sum_to_one_and_decay(self) -> None:
+        weights = candidate_weights(15)
+        assert sum(weights) == pytest.approx(1.0)
+        assert weights[0] == pytest.approx(0.5)
+        assert all(a >= b for a, b in pairwise(weights))
+
+    def test_a_single_candidate_takes_everything(self) -> None:
+        assert candidate_weights(1) == (1.0,)
+
+    def test_at_least_one_candidate_is_required(self) -> None:
+        with pytest.raises(ValueError, match="at least one"):
+            candidate_weights(0)

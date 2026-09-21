@@ -66,9 +66,26 @@ class EngineConfig(_Strict):
 
 
 class GoldConfig(_Strict):
-    n: int = Field(default=300, ge=1)
+    """How much hand-coding to do.
+
+    §7.2 proposed 300. That is enough to *measure* reliability but often not
+    enough to *certify* it: the guarantee is limited by how many items land in
+    the smaller class of each code. At 20% prevalence a 300-item sample gives
+    30 positives per split, against the 36 that certifying a near-perfect coder
+    needs at alpha = 0.10. 600 clears it with room for the codes that are rarer
+    than average, which in qualitative work is most of them (§4).
+    """
+
+    n: int = Field(default=600, ge=1)
     enrich_rare_codes: bool = True
-    double_coded_overlap: int = Field(default=100, ge=0)
+
+    double_coded_overlap: int = Field(default=150, ge=0)
+    """Items a second coder also judges, giving the human-human ceiling (§12).
+
+    Real work -- roughly a quarter of the gold sample coded twice -- but without
+    it `check` cannot tell a researcher whether a failing code is a model
+    problem or a codebook problem, which is the more useful of the two answers.
+    """
 
     @model_validator(mode="after")
     def _overlap_fits(self) -> GoldConfig:
@@ -81,7 +98,23 @@ class GoldConfig(_Strict):
 
 
 class ThresholdsConfig(_Strict):
-    alpha: float = Field(default=0.05, gt=0.0, lt=1.0)
+    """Target class-conditional error rate, and the confidence it holds with.
+
+    §7.2 proposed alpha = 0.05. Measured against the procedure, that target and
+    the plan's 300-item gold sample are mutually incompatible: certifying a
+    backend whose true per-class error is 2% needs about 142 accepted items in
+    the smaller class, which at 20% prevalence is a gold sample of roughly
+    1,400. At alpha = 0.10 the same backend needs 36, or about 360 gold items --
+    which is the scale §0.4 actually promises.
+
+    So the default is 0.10. It is a target error rate *within each class among
+    the items the model decided*, with everything else routed to a person, and
+    the validation report states it plainly so a reader can judge it. Set it
+    to 0.05 if your gold sample is large enough to support it; `scruple check`
+    tells you how many items that would take.
+    """
+
+    alpha: float = Field(default=0.10, gt=0.0, lt=1.0)
     delta: float = Field(default=0.05, gt=0.0, lt=1.0)
 
 
@@ -181,12 +214,19 @@ engine:
   confirm_above_calls: 500
 
 gold:
-  n: 300
+  # Certification is limited by the smaller class of each code, not by the
+  # sample as a whole. `scruple check` reports the shortfall when a code fails
+  # for want of evidence rather than accuracy.
+  n: 600
   enrich_rare_codes: true   # extra draws for rare codes, IPW-corrected
-  double_coded_overlap: 100 # items coded twice, giving the human-human ceiling
+  double_coded_overlap: 150 # items coded twice, giving the human-human ceiling
 
 thresholds:
-  alpha: 0.05   # target class-conditional error rate, per class
+  # Target class-conditional error rate, per class, among items the model
+  # decided. Lowering it to 0.05 roughly quadruples the gold sample you need:
+  # `scruple check` reports the shortfall when a code fails for want of
+  # evidence rather than accuracy.
+  alpha: 0.10
   delta: 0.05   # confidence level for the guarantee
 
 chunking:

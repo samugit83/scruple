@@ -160,16 +160,38 @@ class JsonlStore:
 
 @dataclass
 class GoldStore:
-    """Reads and appends gold judgements."""
+    """Reads and appends gold judgements.
+
+    Parsed records are memoised. `check` asks for labels once per code per
+    split, plus the double-coded subset, so on a 900-item gold sample that is
+    twenty-odd full re-parses of several thousand JSON lines -- which dominated
+    the runtime of `scruple check` before this cache existed.
+    """
 
     path: Path
     _store: JsonlStore = field(init=False, repr=False)
+    _cached: list[GoldRecord] | None = field(default=None, init=False, repr=False)
+    _cached_mtime: tuple[float, int] | None = field(default=None, init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._store = JsonlStore(self.path)
 
+    def _stamp(self) -> tuple[float, int] | None:
+        try:
+            stat = self.path.stat()
+        except OSError:
+            return None
+        return (stat.st_mtime, stat.st_size)
+
+    def invalidate(self) -> None:
+        """Drop the memoised records; the next read goes back to disk."""
+        self._cached = None
+        self._cached_mtime = None
+
     def append(self, records: Sequence[GoldRecord]) -> int:
-        return self._store.append(asdict(record) for record in records)
+        written = self._store.append(asdict(record) for record in records)
+        self.invalidate()
+        return written
 
     def record(
         self,
@@ -201,7 +223,13 @@ class GoldStore:
         )
 
     def all_records(self) -> list[GoldRecord]:
-        return [GoldRecord.from_row(row, source=str(self.path)) for row in self._store.read()]
+        stamp = self._stamp()
+        if self._cached is not None and stamp == self._cached_mtime:
+            return self._cached
+        records = [GoldRecord.from_row(row, source=str(self.path)) for row in self._store.read()]
+        self._cached = records
+        self._cached_mtime = stamp
+        return records
 
     def latest(self) -> dict[tuple[str, str, str], GoldRecord]:
         """The most recent judgement per (item, code, coder).
@@ -276,6 +304,7 @@ class GoldStore:
 
     def purge(self) -> bool:
         """Delete the gold file. Personal data at rest (§6)."""
+        self.invalidate()
         if self.path.exists():
             self.path.unlink()
             return True

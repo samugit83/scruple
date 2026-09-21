@@ -13,10 +13,12 @@ coverage, so a marginal formulation certifies it at alpha = 5% while its kappa
 is 0. Splitting the risk by true class removes that degeneracy, because the
 all-negative coder is wrong on 100% of the accepted positive class.
 
-Multiplicity: the grid is scanned in full and corrected with Bonferroni over
-its candidates. The plan's §8.6 originally specified a fixed-sequence walk from
-the most conservative band, which needs no within-code correction, and that
-turned out to be unsound here -- see `_WHY_NOT_FIXED_SEQUENCE` below.
+Multiplicity: the grid is scanned in full and corrected with a **weighted**
+Bonferroni over its candidates, the weights falling geometrically from the
+highest-coverage band. The plan's §8.6 originally specified a fixed-sequence
+walk from the most conservative band, which needs no within-code correction,
+and that turned out to be unsound here -- see `_WHY_NOT_FIXED_SEQUENCE` and
+`_WHY_WEIGHTED` below.
 
 Across codes there is deliberately still no family-wise correction: each code is
 a separate claim, reported separately, exactly as researchers already report
@@ -74,6 +76,41 @@ number in the report to be reproducible from files on disk.
 
 tests/statistical/test_guarantee.py::test_the_most_conservative_band_fails_where_wider_bands_pass
 pins the finding so the fixed-sequence walk cannot be reintroduced quietly.
+"""
+
+_WHY_WEIGHTED = """
+Certification is limited by evidence far more often than by accuracy. With zero
+observed errors, rejecting "risk > alpha" at level d needs
+
+    n >= ln(d) / ln(1 - alpha)
+
+accepted items in that class. At alpha = delta = 0.05 that is 59 items. Spread
+delta evenly over a 15-point grid and it becomes 112 -- so a flat correction
+nearly doubles the gold sample a researcher must hand-code, for grid resolution
+they did not ask for.
+
+Measured on the worked example: a backend that made *no errors at all* on 52
+gold positives still could not be certified, because 0.95^52 = 0.069 does not
+clear 0.05/15 = 0.0033. That is a tool telling a researcher their perfect coder
+is unusable, which is a defect.
+
+Bonferroni permits any pre-specified split of delta across candidates. The
+weights here fall geometrically from the highest-coverage band -- 1/2, 1/4,
+1/8, ... -- which is both what the selection rule prefers anyway and where the
+evidence is, since a high-coverage band accepts more items in each class. The
+preferred band is therefore tested at delta/2, needing 72 items rather than
+112, while the rest of the grid stays available at a lower level for the cases
+where a narrower band is genuinely required.
+
+The ordering that assigns the weights is band width, which is a property of the
+grid and not of the data, so the split is pre-specified as Bonferroni requires.
+
+The cost, stated plainly: bands far from full coverage receive a very small
+share and are effectively untestable at realistic gold-sample sizes. A code that
+can only be certified inside a narrow accept region will therefore report
+NOT_AUTOMATABLE. That is a code where the backend is weak and coverage would be
+low anyway, and §8.6 is explicit that NOT_AUTOMATABLE is a correct, expected
+outcome for some codes rather than something to work around.
 """
 
 MIN_POSITIVE_INSTANCES = 15
@@ -174,6 +211,34 @@ def order_by_conservatism(pairs: Sequence[ThresholdPair]) -> tuple[ThresholdPair
     return tuple(sorted(pairs, key=lambda p: (-p.band_width, -p.t_hi, p.t_lo)))
 
 
+def minimum_accepted(alpha: float, delta_share: float) -> int:
+    """Accepted items needed in a class to certify it with zero observed errors.
+
+    ``(1 - alpha)^n <= delta_share``. This is the number `check` quotes back to
+    a researcher whose code failed for want of evidence rather than accuracy,
+    because "collect 30 more positives" is actionable and "not automatable" is
+    not.
+    """
+    if not 0.0 < alpha < 1.0 or not 0.0 < delta_share < 1.0:
+        raise ValueError("alpha and delta_share must lie in (0, 1)")
+    return math.ceil(math.log(delta_share) / math.log(1.0 - alpha))
+
+
+def candidate_weights(count: int) -> tuple[float, ...]:
+    """Geometric shares of delta, summing to 1, favouring the first candidate.
+
+    Applied to candidates ordered by coverage, highest first. See `_WHY_WEIGHTED`.
+    """
+    if count < 1:
+        raise ValueError("need at least one candidate")
+    if count == 1:
+        return (1.0,)
+    weights = [2.0 ** -(i + 1) for i in range(count - 1)]
+    # The last candidate takes the remainder, so the shares sum to exactly 1.
+    weights.append(1.0 - sum(weights))
+    return tuple(weights)
+
+
 @dataclass(frozen=True)
 class ClassRisk:
     """Risk control evidence for one true class at one candidate band."""
@@ -196,6 +261,7 @@ class Candidate:
     n_accepted: int
     positive: ClassRisk
     negative: ClassRisk
+    delta_share: float = 0.0
 
     @property
     def valid(self) -> bool:
@@ -221,6 +287,25 @@ class ThresholdSelection:
     held_out_kappa: Estimate | None = None
 
     @property
+    def evidence_shortfall(self) -> tuple[int, int] | None:
+        """``(observed, needed)`` when the failure was evidence, not accuracy.
+
+        A backend can make *no errors at all* and still fail certification, if
+        the gold sample simply does not hold enough accepted items for the
+        binomial tail to clear the confidence level. That is a very different
+        message to "your coder is wrong", and the researcher can act on it.
+        """
+        if self.reason is not ReasonCode.NO_VALID_THRESHOLD or not self.candidates:
+            return None
+        clean = [c for c in self.candidates if (c.positive.risk == 0.0 and c.negative.risk == 0.0)]
+        if not clean:
+            return None
+        best = max(clean, key=lambda c: min(c.positive.n_accepted, c.negative.n_accepted))
+        needed = minimum_accepted(self.alpha, self.delta_per_candidate or self.delta)
+        observed = min(best.positive.n_accepted, best.negative.n_accepted)
+        return (observed, needed) if observed < needed else None
+
+    @property
     def message(self) -> str:
         """Plain-language explanation for `scruple check` (§12)."""
         if self.reason is ReasonCode.INSUFFICIENT_EVIDENCE:
@@ -230,6 +315,15 @@ class ThresholdSelection:
                 "anything). Collect more with `scruple gold --enrich <code>`."
             )
         if self.reason is ReasonCode.NO_VALID_THRESHOLD:
+            shortfall = self.evidence_shortfall
+            if shortfall is not None:
+                observed, needed = shortfall
+                return (
+                    f"made no errors on the gold sample, but {observed} decided items in the "
+                    f"smaller class is not enough evidence to certify: {needed} are needed at "
+                    f"alpha={self.alpha:g}. Collect a larger gold sample, or raise "
+                    "thresholds.alpha if a higher per-class error rate is acceptable."
+                )
             return (
                 "could not be automated at any threshold: no band controlled the error rate "
                 f"within each class at alpha={self.alpha:g}. Check whether your two coders "
@@ -399,10 +493,13 @@ def fit_thresholds(
     exact = bool(p.size == 0 or np.allclose(w, w.flat[0]))
     n_positive = int((g == 1.0).sum())
 
-    # Bonferroni over the grid. Every candidate is tested at delta/|grid|, so the
-    # chance that *any* band with true risk above alpha is declared valid stays
-    # at delta, whichever band we then choose among those that passed.
-    delta_per_candidate = delta / len(candidates_grid)
+    # Weighted Bonferroni over the grid: shares of delta fall geometrically
+    # from the highest-coverage band, so the band the selection rule prefers is
+    # tested at delta/2 rather than delta/|grid|. See `_WHY_WEIGHTED`.
+    by_coverage = sorted(candidates_grid, key=lambda pair: (pair.band_width, -pair.t_hi))
+    weights = candidate_weights(len(by_coverage))
+    shares = {pair: delta * weight for pair, weight in zip(by_coverage, weights, strict=True)}
+    delta_per_candidate = shares[by_coverage[0]]
 
     if n_positive < min_positives:
         return ThresholdSelection(
@@ -420,7 +517,10 @@ def fit_thresholds(
         )
 
     evaluated = tuple(
-        evaluate_candidate(p, g, w, pair, alpha=alpha, delta=delta_per_candidate)
+        replace(
+            evaluate_candidate(p, g, w, pair, alpha=alpha, delta=shares[pair]),
+            delta_share=shares[pair],
+        )
         for pair in candidates_grid
     )
     passing = [c for c in evaluated if c.valid]

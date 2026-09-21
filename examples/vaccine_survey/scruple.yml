@@ -1,0 +1,31 @@
+# Configured for the offline example: the `recorded` backend replays
+# probabilities from a file, so this runs with no API key and nothing
+# leaves your machine.
+version: 1
+corpus:
+  path: data/corpus.csv
+  text_column: response
+  id_column: respondent_id
+splits:
+  seed: 42
+  dev: 0.10
+  calibration: 0.45
+  test: 0.45
+backend:
+  name: recorded
+  model: example-recorded-1
+  endpoint: probabilities.json
+engine:
+  concurrency: 8
+  budget_usd: 5.0
+gold:
+  n: 600
+  enrich_rare_codes: true
+  double_coded_overlap: 150
+thresholds:
+  alpha: 0.10
+  delta: 0.05
+chunking:
+  max_tokens: 28000
+  overlap_tokens: 200
+  aggregation: max

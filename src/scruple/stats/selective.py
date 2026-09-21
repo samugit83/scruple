@@ -69,6 +69,15 @@ def _prepare(
     return p, g, normalise_weights(weights, p.size)
 
 
+def _clamp01(value: float) -> float:
+    """Keep a proportion inside [0, 1].
+
+    A weighted mean of an all-true mask can land on 1.0000000000000002, which
+    then makes labour marginally negative and trips validation downstream.
+    """
+    return min(1.0, max(0.0, value))
+
+
 def _decide(probs: FloatArray, pair: ThresholdPair | None) -> tuple[FloatArray, BoolArray]:
     """Decisions and accepted mask; ``pair is None`` means decide everything."""
     if pair is None:
@@ -100,7 +109,7 @@ def final_reliability(
     final = np.where(accepted, decisions, g)
 
     coverage = weighted_mean(accepted.astype(np.float64), w)
-    coverage = 0.0 if coverage is None else coverage
+    coverage = 0.0 if coverage is None else _clamp01(coverage)
     kappa = cohens_kappa(g, final, w)
     if n_resamples:
         kappa = kappa.with_ci(
@@ -110,7 +119,7 @@ def final_reliability(
         )
 
     return LabourPoint(
-        labour=labour_offset + (1.0 - coverage),
+        labour=_clamp01(labour_offset + (1.0 - coverage)),
         coverage=coverage,
         kappa=kappa,
         pair=pair,
@@ -137,7 +146,7 @@ def selective_curve(
         decisions, accepted = pair.decide_all(p)
         n_accepted = int(accepted.sum())
         coverage = weighted_mean(accepted.astype(np.float64), w)
-        coverage = 0.0 if coverage is None else coverage
+        coverage = 0.0 if coverage is None else _clamp01(coverage)
 
         if n_accepted == 0:
             points.append(

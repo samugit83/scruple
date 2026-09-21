@@ -18,6 +18,12 @@ coverage.xml
 # scruple project state: never commit a corpus or a gold sample.
 .scruple/
 out/
+# ...except the worked example's frozen split and gold sample, which are wholly
+# synthetic and must ship for the offline quickstart to work with no API key
+# (§13, §14.11). Everything else under .scruple/ is derived and stays out.
+!examples/*/.scruple/
+!examples/*/.scruple/splits.json
+!examples/*/.scruple/gold.jsonl
 bench/data/
 bench/results/
 !bench/results/.gitkeep

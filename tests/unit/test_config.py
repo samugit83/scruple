@@ -31,9 +31,14 @@ class TestDefaults:
             0.45,
             0.45,
         )
-        assert config.gold.n == 300
-        assert config.gold.double_coded_overlap == 100
-        assert config.thresholds.alpha == 0.05
+        # §7.2 proposed gold.n = 300 and alpha = 0.05. Measurement showed those
+        # to be mutually incompatible: certifying a backend with 2% per-class
+        # error at alpha = 0.05 needs roughly 1,400 gold items, where alpha =
+        # 0.10 needs about 360. The defaults are the pair that actually works
+        # together; see ThresholdsConfig and GoldConfig for the arithmetic.
+        assert config.gold.n == 600
+        assert config.gold.double_coded_overlap == 150
+        assert config.thresholds.alpha == 0.10
         assert config.thresholds.delta == 0.05
         assert config.chunking.max_tokens == 28_000
         assert config.chunking.aggregation == "max"

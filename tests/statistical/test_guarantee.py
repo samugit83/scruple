@@ -20,7 +20,6 @@ import pytest
 
 from scruple.stats.thresholds import (
     ThresholdPair,
-    evaluate_candidate,
     fit_thresholds,
     order_by_conservatism,
     realised_class_risk,
@@ -51,25 +50,34 @@ def _coder(
     prevalence: float,
     *,
     leak: float,
-    m_hi: float = 0.93,
+    false_positive_rate: float = 0.01,
     c_hi: float = 25.0,
     c_lo: float = 60.0,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """A calibrated coder of controllable quality.
+    """A calibrated coder of controllable, prevalence-independent quality.
 
-    Probabilities come from a two-component mixture -- a confident cluster near
-    ``m_hi`` and a confident cluster near zero -- and outcomes are then drawn as
-    ``y ~ Bernoulli(p)``, so the emitted probability means exactly what it says.
+    Probabilities come from a two-component mixture -- a confident cluster and a
+    near-zero one -- and outcomes are drawn as ``y ~ Bernoulli(p)``, so the
+    emitted probability means exactly what it says.
 
-    ``leak`` is the share of all true positives that fall in the near-zero
-    cluster: true positives the coder confidently and wrongly calls "no". It is
-    the parameter that matters, because on the positive class those items are
-    accepted at every band and are errors at every band, so ``leak`` is roughly
-    the floor on P(wrong | accepted, gold = positive). A coder leaking more than
-    alpha of its positives cannot be certified at any threshold, and should not
-    be.
+    Quality is parameterised by the two class-conditional error rates, not by an
+    absolute probability level, because those are the quantities §8.6 controls
+    and they are what "equally good" means across prevalences. Fixing the
+    confident cluster at, say, 0.93 instead would give a coder with 7% negative-
+    class error at prevalence 0.50 and 0.4% at 0.05 -- the same coder looking
+    very different to the procedure for reasons that have nothing to do with it.
+
+    * ``leak`` is the share of true positives sitting in the near-zero cluster:
+      positives the coder confidently and wrongly calls "no". It is the floor on
+      P(wrong | accepted, gold = positive), because a low score is an accepted
+      "no" at every band.
+    * ``false_positive_rate`` is the target P(wrong | accepted, gold = negative).
     """
     mass_hi = (1.0 - leak) * prevalence
+    # Solve for the confident cluster's mean that yields the requested
+    # false-positive rate at this prevalence.
+    ratio = false_positive_rate * (1.0 - prevalence) / mass_hi
+    m_hi = 1.0 / (1.0 + ratio)
     w = mass_hi / m_hi
     m_lo = (leak * prevalence) / (1.0 - w)
     is_hi = rng.random(n) < w
@@ -82,8 +90,8 @@ def _coder(
 
 
 def _good(rng: np.random.Generator, n: int, prevalence: float):
-    """A coder worth automating: it leaks 1% of positives, well inside alpha."""
-    return _coder(rng, n, prevalence, leak=0.01)
+    """A coder worth automating: about 1% error in each class, well inside alpha."""
+    return _coder(rng, n, prevalence, leak=0.01, false_positive_rate=0.01)
 
 
 def _overconfident(rng: np.random.Generator, n: int, prevalence: float, gamma: float = 3.0):
@@ -170,7 +178,7 @@ def test_a_coder_leaking_more_than_alpha_of_positives_is_refused(prevalence: flo
     rng = np.random.default_rng(int(prevalence * 555))
     n_cal = _calibration_size(prevalence)
     for _ in range(100):
-        probs, gold = _coder(rng, n_cal, prevalence, leak=0.15)
+        probs, gold = _coder(rng, n_cal, prevalence, leak=0.15, false_positive_rate=0.01)
         selection = fit_thresholds(probs, gold, alpha=ALPHA, delta=DELTA, grid=SIM_GRID)
         assert selection.verdict.usable is False
 
@@ -247,41 +255,36 @@ def test_miscalibrated_control_does_not_break_risk_control(prevalence: float) ->
 def test_overconfidence_is_never_rewarded() -> None:
     """Overstating confidence must not win a coder more automation than honesty.
 
-    At balanced prevalence the honest coder needs an *interior* band -- it is
-    certified at about 77% coverage, sending the rest to a human. Sharpening its
-    probabilities toward 0 and 1 destroys the resolution needed to place that
-    band at all, and the overconfident version is rejected outright. Where full
-    coverage already works, at lower prevalence, sharpening changes no decision
-    and so changes nothing.
+    It cannot, and the reason is worth stating: a monotone sharpening preserves
+    the ranking of items, so at any band it accepts exactly the set an honest
+    coder would accept at some other band, with identical errors. The procedure
+    tests observed error counts, not stated probabilities, so it is simply
+    indifferent.
 
-    Either way overconfidence is paid for in rejections or in labour, and never
-    converted into unearned coverage.
+    An earlier version of this test asserted something stronger -- that at
+    balanced prevalence the overconfident coder is rejected outright. That was
+    real but was an artifact of the simulated coder's shape rather than of
+    overconfidence: it fixed the confident cluster at a single probability, so
+    at balanced prevalence the coder had 7% negative-class error and needed an
+    interior band that sharpening then destroyed. Parameterising the coder by
+    its class-conditional error rates removes the artifact, and the honest
+    claim is the one asserted here.
     """
-    trials = 150
-    rates: dict[float, tuple[float, float]] = {}
+    trials = 120
     for prevalence in (0.50, 0.20, 0.05):
         n_cal = _calibration_size(prevalence)
-        rng = np.random.default_rng(777)
         measured: list[float] = []
         for generator in (_good, _overconfident):
+            rng = np.random.default_rng(777)
             certified = 0
             for _ in range(trials):
                 probs, gold = generator(rng, n_cal, prevalence)
                 selection = fit_thresholds(probs, gold, alpha=ALPHA, delta=DELTA, grid=SIM_GRID)
                 certified += selection.selected is not None
             measured.append(certified / trials)
-        rates[prevalence] = (measured[0], measured[1])
-
-    honest_balanced, over_balanced = rates[0.50]
-    assert honest_balanced > 0.20, "the honest coder should be certified sometimes here"
-    assert over_balanced == 0.0, (
-        "sharpening removed the interior band the honest coder needed, so the "
-        "overconfident coder should not be certified at all at this prevalence"
-    )
-
-    # And nowhere does overconfidence certify materially more often than honesty.
-    for prevalence, (honest, over) in rates.items():
-        assert over <= honest + 0.08, (
+        honest, over = measured
+        assert honest > 0.20, "the honest coder should be certified here, or this proves nothing"
+        assert over <= honest + 0.05, (
             f"overconfidence was rewarded at prevalence {prevalence}: "
             f"{over:.0%} certified versus {honest:.0%} for the honest coder"
         )
@@ -338,23 +341,22 @@ def test_the_most_conservative_band_fails_where_wider_bands_pass(prevalence: flo
     rng = np.random.default_rng(int(prevalence * 2024))
     n = _calibration_size(prevalence)
     probs, gold = _good(rng, n, prevalence)
-    w = np.ones(n)
 
-    candidates = [
-        evaluate_candidate(probs, gold, w, pair, alpha=ALPHA, delta=DELTA / len(SIM_GRID))
-        for pair in SIM_GRID
-    ]
-    most_conservative = candidates[0]
-    widest_coverage = max(candidates, key=lambda c: c.coverage)
+    # Evaluate through fit_thresholds so the candidates carry the real
+    # per-candidate confidence levels rather than a flat approximation of them.
+    selection = fit_thresholds(probs, gold, alpha=ALPHA, delta=DELTA, grid=SIM_GRID)
+    candidates = selection.candidates
+    most_conservative = max(candidates, key=lambda c: c.pair.band_width)
+    chosen = next(c for c in candidates if c.pair == selection.selected)
 
-    assert most_conservative.coverage < widest_coverage.coverage
     assert most_conservative.valid is False, (
         "the most conservative band passed; if that becomes the norm, revisit "
         "whether fixed-sequence testing is safe after all"
     )
-    assert widest_coverage.valid is True
+    assert selection.selected is not None, "a wider-coverage band should still certify"
+    assert chosen.coverage > most_conservative.coverage
     # And the mechanism is visible: far fewer positives to learn from.
-    assert most_conservative.positive.n_accepted < widest_coverage.positive.n_accepted
+    assert most_conservative.positive.n_accepted < chosen.positive.n_accepted
 
 
 def test_bootstrap_intervals_achieve_nominal_coverage() -> None:

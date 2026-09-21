@@ -67,6 +67,7 @@ class RecordedBackend(BaseBackend):
         return self.version
 
     def _score_batch(self, state: str, codes: Sequence[Code]) -> dict[str, float | None]:
+        self.usage.calls += 1
         entry = self.table.get(item_hash(state))
         if entry is None:
             if self.strict:

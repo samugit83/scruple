@@ -1,0 +1,66 @@
+# The codebook for the synthetic worked example.
+#
+# Two of these codes are designed to fail, because a tool that only ever
+# shows success is not demonstrating what makes it worth using:
+#   religious_objection  too rare to reach 15 positives in the gold sample
+#   dignity_violation    interpretive; even the two coders disagree
+version: 1
+codes:
+  access_barrier:
+    type: noul
+    definition: >
+      The respondent cites a practical obstacle to attending: time, transport,
+      clinic opening hours, distance or cost.
+    examples_yes:
+      - "the clinic closes at five and I work two jobs"
+      - "there is no bus out here and I do not drive"
+    examples_no:
+      - "I just do not think it is necessary"
+  distrust_pharma:
+    type: noul
+    definition: >
+      The respondent expresses distrust of pharmaceutical companies or their
+      motives.
+    examples_yes:
+      - "the drug companies only care about profit"
+      - "I do not trust big pharma, full stop"
+    examples_no:
+      - "my doctor explained it and I was happy"
+  no_recommendation:
+    type: noul
+    definition: >
+      The respondent says no clinician or trusted person recommended it to
+      them.
+    examples_yes:
+      - "nobody ever suggested I should have it"
+      - "my GP never brought it up"
+    examples_no:
+      - "my nurse recommended it twice"
+  procrastination:
+    type: noul
+    definition: >
+      The respondent intended to attend but had not yet got round to it.
+    examples_yes:
+      - "I keep meaning to book it and forgetting"
+      - "just have not got round to it yet"
+    examples_no:
+      - "I decided against it deliberately"
+  religious_objection:
+    type: noul
+    definition: >
+      The respondent cites a religious or faith-based reason for declining.
+    examples_yes:
+      - "it goes against my faith"
+      - "my church teaches against it"
+    examples_no:
+      - "no religious reason, I simply forgot"
+  dignity_violation:
+    type: noul
+    definition: >
+      The respondent describes being treated without dignity or respect by
+      health staff.
+    examples_yes:
+      - "they talked over me like I was not there"
+      - "I felt patronised for the whole visit"
+    examples_no:
+      - "the staff were perfectly polite"
