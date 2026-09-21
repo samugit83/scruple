@@ -30,6 +30,9 @@ class StubBackend(BaseBackend):
     fail_codes: frozenset[str] = frozenset()
     fail_texts: frozenset[str] = frozenset()
     raise_on_texts: frozenset[str] = frozenset()
+    delay: float = 0.0
+    """Simulated latency, so a warm-cache test has something to save."""
+
     calls: list[tuple[str, tuple[str, ...]]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -49,6 +52,10 @@ class StubBackend(BaseBackend):
     def _score_batch(self, state: str, codes: Sequence[Code]) -> dict[str, float | None]:
         self.calls.append((state, tuple(code.id for code in codes)))
         self.usage.calls += 1
+        if self.delay:
+            import time
+
+            time.sleep(self.delay)
         self.usage.input_tokens += 100
         if state in self.raise_on_texts:
             raise BackendError("stub was told to fail")

@@ -18,6 +18,24 @@ ALLOWED_PURPOSES = frozenset({"reporting", "final_evaluation"})
 """Purposes for which test data may legitimately be read: reporting the final
 numbers, and the §8.8 simulation that produces them. Never fitting."""
 
+READING_DUNDERS = frozenset(
+    {
+        "__array__",
+        "__array_interface__",
+        "__array_struct__",
+        "__dataframe__",
+        "__float__",
+        "__index__",
+        "__int__",
+    }
+)
+"""Dunders that *are* a read rather than a feature probe.
+
+numpy in particular will call `__array__`, and fall back to wrapping the object
+in a zero-dimensional array when that raises AttributeError -- so letting these
+degrade quietly would mean `np.asarray(sealed_test_labels)` silently succeeding
+and the fitter proceeding on nonsense. They refuse loudly instead."""
+
 
 class SealedDataError(RuntimeError):
     """Raised when sealed data is read outside an allowed purpose."""
@@ -68,7 +86,9 @@ class Sealed(Generic[T]):
         )
 
     def __getattr__(self, name: str) -> NoReturn:
-        # Let genuine dunder probes fail normally so unrelated protocol checks
+        if name in READING_DUNDERS:
+            self._refuse(f"conversion via {name}")
+        # Let other dunder probes fail normally, so unrelated protocol checks
         # (hasattr on __iter__, say) do not surface as a sealing error.
         if name.startswith("__") and name.endswith("__"):
             raise AttributeError(name)

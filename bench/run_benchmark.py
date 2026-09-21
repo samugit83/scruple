@@ -132,7 +132,9 @@ def write_report(results: list[BackendResult], dataset: Path, out: Path) -> Path
         row = f"| `{code_id}` | {'--' if ceiling is None else f'{ceiling:.2f}'} |"
         for result in results:
             check = next(
-                c for c in result.report.codes if c.code_id == code_id  # type: ignore[attr-defined]
+                c
+                for c in result.report.codes
+                if c.code_id == code_id  # type: ignore[attr-defined]
             )
             if check.kappa is not None and check.kappa.value is not None:
                 row += f" {check.kappa.value:.2f} ({check.selection.coverage * 100:.0f}% auto) |"

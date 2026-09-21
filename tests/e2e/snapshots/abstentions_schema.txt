@@ -1,0 +1,4 @@
+item_id
+code_id
+probability
+text

@@ -117,10 +117,24 @@ class TestProtocolProbes:
         into a confusing failure, so those probes get a plain AttributeError.
         """
         sealed: Sealed[list[int]] = Sealed([1, 2, 3], label="test")
-        assert hasattr(sealed, "__array__") is False
-        assert hasattr(sealed, "__dataframe__") is False
-        with pytest.raises(AttributeError):
-            sealed.__array_interface__  # type: ignore[attr-defined]  # noqa: B018
+        assert hasattr(sealed, "__deepcopy_fallback__") is False
+        assert hasattr(sealed, "__fspath__") is False
         # ...while ordinary attribute names still raise the sealing error.
         with pytest.raises(SealedDataError):
             sealed.values  # type: ignore[attr-defined]  # noqa: B018
+
+    def test_numpy_conversion_refuses_rather_than_wrapping_the_object(self) -> None:
+        """numpy falls back to a zero-dimensional object array when `__array__`
+        raises AttributeError, so a quiet failure here would mean
+        `np.asarray(sealed)` succeeding and the fitter running on nonsense."""
+        import numpy as np
+
+        sealed: Sealed[list[int]] = Sealed([1, 2, 3], label="test")
+        with pytest.raises(SealedDataError, match="conversion"):
+            np.asarray(sealed)
+
+        # Built-in conversions look their dunder up on the type rather than the
+        # instance, so __getattr__ is never consulted. They already fail hard,
+        # which is all that is required -- nothing is silently wrapped.
+        with pytest.raises(TypeError):
+            float(sealed)  # type: ignore[arg-type]

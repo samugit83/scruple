@@ -1,0 +1,17 @@
+code kappa (held-out) auto-code needs you verdict 
+access_barrier 0.98 95.7% 4.3% ok 
+distrust_pharma -- -- -- NOT_AUTOMATABLE 
+no_recommendation 0.99 86.7% 13.3% ok 
+procrastination 0.93 98.0% 2.0% ok 
+religious_objection -- -- -- INSUFFICIENT_EVIDENCE (7 positives)
+dignity_violation -- -- -- NOT_AUTOMATABLE 
+──────────────────────────────────────────────────────────────────────────
+3 of 6 codes usable · 13.3% of items abstained on those · 3 code(s) to code by hand throughout
+guarantee: class-conditional error <= 10% per class, confidence 95%, per code
+ distrust_pharma could not be automated at any threshold: no band controlled the error rate within 
+each class at alpha=0.1. Check whether your two coders agree on this code -- where humans disagree, 
+the definition is the problem.
+ religious_objection only 7 positive instances in the gold sample (at least 15 are needed before 
+any statistic means anything). Collect more with `scruple gold --enrich <code>`.
+ dignity_violation could not be automated. Your two coders agreed only at kappa=0.28 on this code, 
+which suggests the definition is underspecified. Consider rewriting it.
