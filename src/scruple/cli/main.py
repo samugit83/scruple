@@ -24,6 +24,7 @@ from ..corpus import Split, assign_splits
 from ..engine import Cache, CalibrationRecord, Engine, require_no_drift, save_run
 from ..engine.apply import apply_calibration
 from ..engine.check import run_check
+from ..env import load_env
 from ..errors import ExitCode, ProjectError, ScrupleError, ValidationError
 from ..export import abstention_rows, coded_rows, default_filename, write_table
 from ..gold import (
@@ -38,7 +39,12 @@ from ..gold import (
     summarise,
 )
 from ..project import Project
-from ..report import ReportInputs, build_report, draw_labour_chart
+from ..report import (
+    ReportInputs,
+    build_report,
+    draw_labour_chart,
+    most_informative,
+)
 from .display import check_json, check_table, envelope, error_envelope, show_error
 
 app = typer.Typer(
@@ -64,6 +70,9 @@ def _emit(command: str, data: dict[str, Any], as_json: bool) -> None:
 
 
 def _project() -> Project:
+    # A `.env` beside scruple.yml is read before the backend is built, so a
+    # researcher never has to export shell variables to run the tool.
+    load_env(Path.cwd())
     return Project.load(Path.cwd())
 
 
@@ -789,9 +798,8 @@ def export(
 
             chart_name: str | None = None
             if chart:
-                usable = [c for c in check_report.usable if c.labour]
-                if usable:
-                    best = max(usable, key=lambda c: len(c.labour))
+                best = most_informative(check_report.usable)
+                if best is not None:
                     try:
                         draw_labour_chart(
                             calibrated=best.labour,

@@ -30,8 +30,10 @@ from ..stats import PUBLICATION_KAPPA, Estimate, Verdict
 from .methods import methods_paragraph
 
 VOLATILE_MARK = "<!-- volatile -->"
-"""Lines carrying a timestamp, path or duration are marked so §14.9's golden
-tests can normalise them without normalising anything that matters."""
+"""Lines carrying a timestamp, path, duration or traffic counter are marked so
+§14.9's golden tests can normalise them without normalising anything that
+matters. A counter is volatile because a warm cache legitimately makes it zero;
+the substance -- hashes, seeds, item counts, every statistic -- is not."""
 
 ALPHA_KAPPA_DIVERGENCE = 0.10
 """Above this gap, §8.2 requires the report to point it out."""
@@ -301,10 +303,13 @@ def build_report(inputs: ReportInputs) -> str:
         f"aggregation=`{manifest.chunking.get('aggregation')}` |",
         f"| items | {manifest.item_count:,} |",
         f"| passages scored | {manifest.unit_count:,} |",
-        f"| backend calls | {manifest.calls:,} |",
-        f"| input tokens | {manifest.input_tokens:,} |",
         f"| failures | {manifest.failures:,} |",
         f"| scruple version | `{manifest.scruple_version}` |",
+        # Traffic counters describe this execution rather than the finding: a
+        # warm cache legitimately makes them zero. They are recorded in the run
+        # manifest either way.
+        f"{VOLATILE_MARK} | backend calls | {manifest.calls:,} |",
+        f"{VOLATILE_MARK} | input tokens | {manifest.input_tokens:,} |",
         f"{VOLATILE_MARK} | corpus path | `{manifest.corpus_path}` |",
         f"{VOLATILE_MARK} | wall clock | {manifest.wall_clock_seconds:.1f}s |",
         f"{VOLATILE_MARK} | python | `{manifest.python_version}` on `{manifest.platform}` |",

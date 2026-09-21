@@ -1,6 +1,6 @@
 """Validation report and charts (plan §0.5, §8.8)."""
 
-from .chart import draw_labour_chart, draw_reliability_diagram
+from .chart import draw_labour_chart, draw_reliability_diagram, most_informative
 from .methods import methods_paragraph
 from .validation import ReportInputs, build_report, normalise_for_comparison
 
@@ -10,5 +10,6 @@ __all__ = [
     "draw_labour_chart",
     "draw_reliability_diagram",
     "methods_paragraph",
+    "most_informative",
     "normalise_for_comparison",
 ]

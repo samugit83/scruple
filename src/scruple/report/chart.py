@@ -101,13 +101,32 @@ def draw_labour_chart(
             calibrated_x, lower, upper, color=CALIBRATED_COLOUR, alpha=0.15, linewidth=0, zorder=1
         )
 
+    # Frame the y-axis on the data rather than on the origin, so a backend that
+    # is already reliable does not produce a chart that is nine-tenths empty.
+    # The bar is drawn inside that frame when it falls there, and said in words
+    # when the whole curve clears it.
+    values = calibrated_y + baseline_y
+    low, high = min(values), max(values)
+    margin = max(0.02, (high - low) * 0.15)
+    bottom, top = low - margin, min(1.02, high + margin)
+
     axes.axhline(PUBLICATION_KAPPA, color=BAR_COLOUR, linewidth=1.1, linestyle=":", zorder=1)
+    if bottom <= PUBLICATION_KAPPA <= top:
+        label = f"publication bar, kappa = {PUBLICATION_KAPPA:.2f}"
+        label_y = PUBLICATION_KAPPA
+    else:
+        # Keep the bar just in view, so a reader can see how far above it the
+        # whole curve sits rather than having to infer it from the axis.
+        bottom = min(bottom, PUBLICATION_KAPPA - 0.01)
+        label = f"publication bar, kappa = {PUBLICATION_KAPPA:.2f} — the whole curve clears it"
+        label_y = PUBLICATION_KAPPA
+    axes.set_ylim(bottom, top)
     axes.annotate(
-        f"publication bar, kappa = {PUBLICATION_KAPPA:.2f}",
-        xy=(max(calibrated_x) * 0.99, PUBLICATION_KAPPA),
-        xytext=(0, 5),
+        label,
+        xy=(min(calibrated_x), label_y),
+        xytext=(4, 5),
         textcoords="offset points",
-        ha="right",
+        ha="left",
         va="bottom",
         fontsize=8,
         color=BAR_COLOUR,
@@ -138,13 +157,36 @@ def draw_labour_chart(
     axes.grid(True, alpha=0.2, linewidth=0.6)
     axes.spines["top"].set_visible(False)
     axes.spines["right"].set_visible(False)
-    axes.legend(frameon=False, fontsize=9, loc="lower right")
+    # "best" keeps the legend off the curves; the bar annotation is pinned left
+    # so the two cannot collide whichever corner matplotlib chooses.
+    axes.legend(frameon=False, fontsize=9, loc="best")
 
     figure.tight_layout()
     path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(path, dpi=dpi)
     plt.close(figure)
     return path
+
+
+def most_informative(checks: Sequence[Any]) -> Any | None:
+    """The code whose chart best shows what abstention buys.
+
+    Picks the largest area between the calibrated curve and the random
+    baseline. A code the backend already codes near-perfectly has almost no gap
+    to show, and charting it would undersell the tool by accident.
+    """
+    best = None
+    best_gap = -1.0
+    for check in checks:
+        if not check.labour or not check.baseline:
+            continue
+        gap = 0.0
+        for calibrated, random_point in zip(check.labour, check.baseline, strict=False):
+            if calibrated.kappa.value is not None and random_point.kappa.value is not None:
+                gap += max(0.0, calibrated.kappa.value - random_point.kappa.value)
+        if gap > best_gap:
+            best, best_gap = check, gap
+    return best
 
 
 def draw_reliability_diagram(

@@ -12,6 +12,7 @@ from pydantic import ValidationError as PydanticValidationError
 from .errors import ValidationError
 
 DEFAULT_BACKEND = "jev"
+DEFAULT_MODEL = "typesafe-ai/jev"
 """§17.4 is a values decision, resolved to the hosted calibrated backend: it is
 the model the thesis rests on and it gives the best first run. `scruple init`
 prints the privacy trade-off, and `docs/privacy.md` states exactly what leaves
@@ -46,8 +47,14 @@ class SplitsConfig(_Strict):
 
 class BackendConfig(_Strict):
     name: str = DEFAULT_BACKEND
-    model: str = "jev-latest"
+
+    model: str = DEFAULT_MODEL
+    """Model alias. The run manifest records whichever version the API actually
+    returned, not this, because the report must say what ran (§7.3)."""
+
     endpoint: str | None = None
+    """Override to route through a gateway (§9.1). Left unset, the backend uses
+    its own default, or JEV_BASE_URL from the environment or `.env`."""
 
 
 class EngineConfig(_Strict):
@@ -201,8 +208,9 @@ splits:
 
 backend:
   name: {backend}
-  model: jev-latest
-  endpoint: null     # override to route through a gateway
+  model: typesafe-ai/jev
+  # Leave null to use the backend default, or JEV_BASE_URL from .env.
+  endpoint: null
 
 engine:
   concurrency: 16

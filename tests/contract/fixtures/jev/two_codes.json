@@ -1,0 +1,22 @@
+{
+  "answers": {
+    "access_barrier": {
+      "noul": 0.98,
+      "type": "noul"
+    },
+    "distrust_pharma": {
+      "noul": 0.02,
+      "type": "noul"
+    }
+  },
+  "model": "typesafe-ai/jev",
+  "provider_metadata": {
+    "typesafe": {
+      "confidence": {}
+    }
+  },
+  "usage": {
+    "input_tokens": 323,
+    "output_tokens": 43
+  }
+}

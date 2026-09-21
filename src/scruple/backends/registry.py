@@ -16,7 +16,11 @@ BackendFactory = Callable[[BackendConfig], Backend]
 
 
 def _jev(config: BackendConfig) -> Backend:
-    return JevBackend(model=config.model, endpoint=config.endpoint)
+    # "jev-latest" is the placeholder `scruple init` writes; it is not a model
+    # the API knows, so fall back to the configured default rather than sending
+    # it and failing with a confusing 400.
+    model = None if config.model in ("jev-latest", "", None) else config.model
+    return JevBackend(model=model, endpoint=config.endpoint)
 
 
 def _openai(config: BackendConfig) -> Backend:
@@ -52,7 +56,7 @@ REGISTRY: dict[str, BackendFactory] = {
 }
 
 PRIVACY: dict[str, str] = {
-    "jev": "Item text is sent to api.typesafe.ai.",
+    "jev": "Item text is sent to the configured System One endpoint (TypeSafe, or a gateway).",
     "openai": "Item text is sent to api.openai.com.",
     "anthropic": "Item text is sent to api.anthropic.com.",
     "local": "Item text is sent only to the endpoint you configure.",

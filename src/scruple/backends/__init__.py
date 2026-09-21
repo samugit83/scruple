@@ -13,7 +13,7 @@ from .base import (
     split_codes,
     validate_probability,
 )
-from .jev import JevBackend, render_question
+from .jev import JevBackend, render_instructions
 from .llm import AnthropicBackend, LocalBackend, OpenAIBackend, OpenAICompatibleBackend
 from .recorded import RecordedBackend
 from .registry import PRIVACY, REGISTRY, available, build_backend
@@ -34,7 +34,7 @@ __all__ = [
     "available",
     "build_backend",
     "question_tokens",
-    "render_question",
+    "render_instructions",
     "split_codes",
     "validate_probability",
 ]

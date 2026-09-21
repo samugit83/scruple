@@ -4,18 +4,27 @@ Wholly synthetic. §14.11 forbids committing real personal data or a real
 corpus, and an example shipping real survey answers would be exactly the thing
 this tool exists to help people handle carefully.
 
-It writes a corpus, a codebook, recorded probabilities from a simulated coder,
-a frozen split and a pre-coded gold sample, so the full pipeline runs offline
-with no API key. First-run experience decides adoption, and "get an API key
-first" loses most of it.
+It writes a corpus, a codebook, recorded probabilities, a frozen split and a
+pre-coded gold sample, so the full pipeline runs offline with no API key. First
+-run experience decides adoption, and "get an API key first" loses most of it.
 
-Code quality is varied deliberately so the example demonstrates all four
-verdicts, including the two failures -- a tool that only ever shows success is
-not demonstrating the thing that makes it worth using.
+    uv run python bench/make_example.py            # simulated probabilities
+    uv run python bench/make_example.py --live     # real Jev probabilities
+
+With `--live` the probabilities come from the actual System One endpoint, so
+the shipped example demonstrates how the real model behaves on this corpus
+rather than how a simulation of it behaves. The corpus itself stays synthetic
+either way: §14.11 forbids committing real personal data or a real corpus.
+
+The simulated path varies code quality deliberately so the example reaches
+every verdict `check` can report, including the failures -- a tool that only
+ever shows success is not demonstrating the thing that makes it worth using.
+Real probabilities are whatever they are, which is the point of using them.
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
 import json
 import random
@@ -26,7 +35,8 @@ from pathlib import Path
 from scruple.corpus import assign_splits
 from scruple.hashing import item_hash, normalise_item_text
 
-OUT = Path(__file__).resolve().parent.parent / "examples" / "vaccine_survey"
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "examples" / "vaccine_survey"
 N = 1200
 SEED = 20260921
 GOLD_N = 600
@@ -207,7 +217,64 @@ def _noisy(rng: random.Random, truth: bool, accuracy: float) -> int:
     return int(truth) if rng.random() < accuracy else int(not truth)
 
 
+def score_with_jev(
+    rows: list[dict[str, str]], codebook_path: Path
+) -> tuple[dict[str, dict[str, float]], str]:
+    """Score the corpus with the live System One endpoint.
+
+    Uses the engine rather than raw HTTP, so the recording is produced by the
+    same batching, caching and validation path a real run uses.
+    """
+    from scruple.backends.jev import JevBackend
+    from scruple.codebook import load_codebook
+    from scruple.config import parse_config
+    from scruple.corpus import load_csv
+    from scruple.engine import Cache, Engine
+    from scruple.env import load_env
+
+    load_env(ROOT)
+    backend = JevBackend()
+    codebook = load_codebook(codebook_path)
+    corpus = load_csv(
+        OUT / "data" / "corpus.csv", text_column="response", id_column="respondent_id"
+    )
+    config = parse_config("engine:\n  concurrency: 16\n")
+
+    print(f"scoring {len(corpus)} items x {len(codebook)} codes against the live endpoint...")
+    with Cache(OUT / ".scruple" / "cache.sqlite") as cache:
+        engine = Engine(
+            backend=backend,
+            config=config,
+            cache=cache,
+            progress=lambda done, total: (
+                print(f"  {done}/{total}", end="\r", flush=True) if done % 100 == 0 else None
+            ),
+        )
+        result = engine.run(corpus, codebook, approved=True)
+    print()
+    if result.failures:
+        print(f"  WARNING: {len(result.failures)} (item, code) pairs failed")
+
+    by_id = corpus.by_id()
+    table: dict[str, dict[str, float]] = {}
+    for item_id, per_code in result.scores.items():
+        entry = table.setdefault(item_hash(by_id[item_id].text), {})
+        for code_id, probability in per_code.items():
+            if probability is not None:
+                entry[code_id] = round(float(probability), 4)
+    print(f"  cost reported by the gateway: ${backend.usage.cost_usd:.4f}")
+    return table, backend.model_version()
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate the worked example.")
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="score the corpus with the real Jev endpoint instead of simulating it",
+    )
+    args = parser.parse_args()
+
     rng = random.Random(SEED)
     (OUT / "data").mkdir(parents=True, exist_ok=True)
     (OUT / ".scruple").mkdir(parents=True, exist_ok=True)
@@ -268,15 +335,7 @@ def main() -> None:
             entry[code] = round(
                 min(0.9995, max(0.0005, rng.betavariate(mean * 30, (1.0 - mean) * 30))), 4
             )
-    (OUT / "probabilities.json").write_text(
-        json.dumps(
-            {"model_version": "example-recorded-1", "probabilities": table},
-            indent=1,
-            sort_keys=True,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
+    model_version = "example-simulated-1"
 
     # Codebook.
     lines = [
@@ -299,6 +358,17 @@ def main() -> None:
         lines.append("    examples_no:")
         lines += [f'      - "{ex}"' for ex in spec.no[:1]]
     (OUT / "codebook.yml").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    if args.live:
+        table, model_version = score_with_jev(rows, OUT / "codebook.yml")
+
+    (OUT / "probabilities.json").write_text(
+        json.dumps(
+            {"model_version": model_version, "probabilities": table}, indent=1, sort_keys=True
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     # Freeze the split exactly as `scruple load` would.
     from scruple.hashing import corpus_hash

@@ -1,0 +1,4 @@
+{
+  "error_type": "invalid_request",
+  "message": "questions.access_barrier.type: Invalid discriminator value. Expected 'boolean' | 'choice' | 'score'"
+}
