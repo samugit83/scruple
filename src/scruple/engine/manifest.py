@@ -31,6 +31,11 @@ class Manifest:
     run_id: str
     created_at: str
     scruple_version: str
+    purpose: str
+    """Why this run happened: "run" scored the whole corpus, "check" scored only
+    the gold sample, "try" only a dev sample. Without it, `export` could pick up
+    a check's partial probabilities and quietly write a mostly-empty coded.csv."""
+
     backend: str
     model_version: str
     codebook_hash: str
@@ -75,4 +80,5 @@ def build_manifest(**kwargs: Any) -> Manifest:
     kwargs.setdefault("run_id", new_run_id())
     kwargs.setdefault("created_at", datetime.now(UTC).isoformat(timespec="seconds"))
     kwargs.setdefault("scruple_version", __version__)
+    kwargs.setdefault("purpose", "run")
     return Manifest(**kwargs)

@@ -121,6 +121,7 @@ class Engine:
         splits_seed: int | None = None,
         approved: bool = True,
         run_id: str | None = None,
+        purpose: str = "run",
     ) -> RunResult:
         """Score every (item, code) pair, using the cache wherever possible."""
         started = time.monotonic()
@@ -238,6 +239,7 @@ class Engine:
         chunked = sum(1 for indexes in units_by_item.values() if len(indexes) > 1)
         manifest = build_manifest(
             run_id=run_id or new_run_id(),
+            purpose=purpose,
             backend=self.backend.name,
             model_version=self.backend.model_version(),
             codebook_hash=codebook.hash,
@@ -299,3 +301,22 @@ def save_run(result: RunResult, runs_dir: Path) -> Path:
             encoding="utf-8",
         )
     return directory
+
+
+def latest_run(runs_dir: Path, *, purpose: str | None = None) -> Path | None:
+    """The most recent run directory, optionally restricted by purpose.
+
+    Run ids are UTC timestamps, so sorting by name sorts by time.
+    """
+    import json as _json
+
+    for directory in sorted(runs_dir.glob("*/manifest.json"), reverse=True):
+        if purpose is None:
+            return directory.parent
+        try:
+            recorded = _json.loads(directory.read_text(encoding="utf-8")).get("purpose", "run")
+        except (OSError, _json.JSONDecodeError):
+            continue
+        if recorded == purpose:
+            return directory.parent
+    return None

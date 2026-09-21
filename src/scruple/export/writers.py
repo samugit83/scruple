@@ -128,6 +128,18 @@ def write_table(
     return path
 
 
+SUFFIXES = {"csv": "csv", "parquet": "parquet", "stata": "dta", "spss": "sav"}
+
+
 def default_filename(name: str, fmt: str) -> str:
-    suffix = {"csv": "csv", "parquet": "parquet", "stata": "dta", "spss": "sav"}[fmt]
-    return f"{name}.{suffix}"
+    """The output filename for a format, refusing an unknown one clearly.
+
+    Validated here as well as in `write_table` because the filename is computed
+    first: an unknown format would otherwise surface as a raw KeyError rather
+    than as something the user can act on.
+    """
+    if fmt not in SUFFIXES:
+        raise ValidationError(
+            f"unknown export format {fmt!r}", hint=f"Supported: {', '.join(FORMATS)}."
+        )
+    return f"{name}.{SUFFIXES[fmt]}"

@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Nightly: the slow statistical simulation and mutation testing (§14.13).
+    - cron: "0 3 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # §14.2: no test in any tier may touch the network. Point every proxy
+  # variable at a black hole so an accidental live call fails loudly and fast
+  # rather than passing on someone's machine and failing on someone else's.
+  HTTP_PROXY: http://127.0.0.1:9
+  HTTPS_PROXY: http://127.0.0.1:9
+  NO_PROXY: ""
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - name: ruff check
+        run: uv run ruff check src tests bench
+      - name: ruff format
+        run: uv run ruff format --check src tests bench
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      # mypy runs strict on stats/, normal elsewhere (§14.13).
+      - run: uv run mypy src/scruple
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --python ${{ matrix.python }}
+      - name: unit, property, contract, integration and e2e
+        run: uv run pytest -m "not statistical" -q
+
+  coverage-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - name: stats/ must be 100% line and branch covered
+        run: |
+          uv run pytest -m "not statistical" -q \
+            --cov=src/scruple/stats --cov-report=term-missing \
+            --cov-fail-under=100
+      - name: overall coverage
+        run: |
+          uv run pytest -m "not statistical" -q \
+            --cov=src/scruple --cov-report=term \
+            --cov-fail-under=90
+
+  statistical:
+    # The guarantee itself, by simulation. Slow, so it runs on changes to the
+    # statistics layer and nightly regardless (§14.6).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - name: did stats/ change?
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "push" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q '^src/scruple/stats/\|^tests/statistical/'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: statistical validity simulation
+        if: steps.changed.outputs.run == 'true'
+        run: uv run pytest tests/statistical -q
+
+  mutation:
+    # §14.10: the guard against tests that execute code without asserting on
+    # it, which is the classic way a fully covered statistics module is still
+    # wrong. Nightly, not per-commit.
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - run: uv run --with mutmut mutmut run --paths-to-mutate src/scruple/stats/ || true
+      - run: uv run --with mutmut mutmut results

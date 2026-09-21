@@ -1,0 +1,35 @@
+# Mirrors the lint, format and typecheck jobs in CI, so failures surface before
+# push rather than after (§14.13).
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^(src|tests|bench)/
+      - id: ruff-format
+        files: ^(src|tests|bench)/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: check-merge-conflict
+      # A corpus or a gold sample must never be committed (§14.11), and a key
+      # in git history is a live key forever.
+      - id: detect-private-key
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
+        files: ^src/scruple/
+        additional_dependencies:
+          - pydantic>=2.6
+          - numpy>=1.24
+          - types-PyYAML

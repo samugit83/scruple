@@ -5,7 +5,15 @@ from .cache import Cache, CacheStats
 from .calibration import CalibrationRecord, CodeCalibration, new_record
 from .drift import Drift, chunking_fingerprint, detect_drift, require_no_drift
 from .manifest import Manifest, build_manifest, new_run_id
-from .runner import Engine, RunResult, Unit, build_units, plan_units, save_run
+from .runner import (
+    Engine,
+    RunResult,
+    Unit,
+    build_units,
+    latest_run,
+    plan_units,
+    save_run,
+)
 
 __all__ = [
     "Cache",
@@ -23,6 +31,7 @@ __all__ = [
     "chunking_fingerprint",
     "detect_drift",
     "estimate_cost",
+    "latest_run",
     "needs_confirmation",
     "new_record",
     "new_run_id",

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import sys
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -18,10 +19,17 @@ from rich.console import Console
 
 from .. import __version__
 from ..backends import PRIVACY, available, build_backend
-from ..codebook import single_sentence_warnings
+from ..codebook import Codebook, single_sentence_warnings
 from ..config import DEFAULT_BACKEND
 from ..corpus import Split, assign_splits
-from ..engine import Cache, CalibrationRecord, Engine, require_no_drift, save_run
+from ..engine import (
+    Cache,
+    CalibrationRecord,
+    Engine,
+    latest_run,
+    require_no_drift,
+    save_run,
+)
 from ..engine.apply import apply_calibration
 from ..engine.check import run_check
 from ..env import load_env
@@ -47,6 +55,20 @@ from ..report import (
 )
 from .display import check_json, check_table, envelope, error_envelope, show_error
 
+
+@dataclass
+class ComparisonRow:
+    """One backend's showing in `scruple compare`. Part of the §13.1 contract."""
+
+    backend: str
+    model_version: str
+    usable: list[str]
+    codes: int
+    share_needing_review: float
+    cost_usd: float
+    kappa: dict[str, float | None]
+
+
 app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
@@ -67,6 +89,20 @@ def _fail(command: str, error: ScrupleError, as_json: bool) -> None:
 def _emit(command: str, data: dict[str, Any], as_json: bool) -> None:
     if as_json:
         typer.echo(envelope(command, data))
+
+
+def _subset(codebook: Codebook, spec: str | None) -> Codebook:
+    """Restrict a codebook to `--codes`, reporting an unknown id clearly."""
+    if not spec:
+        return codebook
+    wanted = [c.strip() for c in spec.split(",") if c.strip()]
+    try:
+        return codebook.subset(wanted)
+    except KeyError as exc:
+        raise ValidationError(
+            f"unknown code in --codes: {exc.args[0]}",
+            hint=f"The codebook defines: {', '.join(codebook.ids)}.",
+        ) from exc
 
 
 def _project() -> Project:
@@ -309,9 +345,7 @@ def try_command(
     """Run on a random sample from the dev split. The iteration loop."""
     try:
         project = _project()
-        codebook = project.codebook()
-        if codes:
-            codebook = codebook.subset([c.strip() for c in codes.split(",") if c.strip()])
+        codebook = _subset(project.codebook(), codes)
         corpus = project.corpus()
         splits = project.splits()
         splits.require_corpus(corpus.hash)
@@ -334,7 +368,7 @@ def try_command(
             engine = Engine(
                 backend=build_backend(project.config.backend), config=project.config, cache=cache
             )
-            result = engine.run(sample, codebook, corpus_path=project.corpus_path)
+            result = engine.run(sample, codebook, corpus_path=project.corpus_path, purpose="try")
     except ScrupleError as error:
         _fail("try", error, as_json)
         return
@@ -546,6 +580,7 @@ def check(
                 codebook,
                 corpus_path=project.corpus_path,
                 splits_seed=splits.seed,
+                purpose="check",
             )
 
         report = run_check(
@@ -603,8 +638,7 @@ def run(
         # §10.4: refuse on drift, naming what changed.
         require_no_drift(record, codebook, project.config)
 
-        if codes:
-            codebook = codebook.subset([c.strip() for c in codes.split(",") if c.strip()])
+        codebook = _subset(codebook, codes)
 
         target = corpus
         if retry_failed:
@@ -716,13 +750,18 @@ def review(
 
 
 def _current_coding(project: Project, corpus: Any, codebook: Any, record: CalibrationRecord):  # type: ignore[no-untyped-def]
-    """Apply the fitted bands to the most recent probabilities on disk."""
-    runs = sorted(project.runs_dir.glob("*/probabilities.json"))
-    if not runs:
+    """Apply the fitted bands to the most recent **full** run on disk.
+
+    A `check` also writes probabilities, but only for the gold sample. Picking
+    those up here would quietly produce a coded.csv in which most of the corpus
+    is unreviewed, which looks like a working export and is not one.
+    """
+    directory = latest_run(project.runs_dir, purpose="run")
+    if directory is None:
         raise ProjectError(
             "no run to apply", hint="Run `scruple run` before reviewing or exporting."
         )
-    scores = json.loads(runs[-1].read_text(encoding="utf-8"))
+    scores = json.loads((directory / "probabilities.json").read_text(encoding="utf-8"))
 
     human: dict[tuple[str, str], int] = {}
     for record_ in GoldStore(project.gold_path).latest().values():
@@ -775,21 +814,17 @@ def export(
         if report:
             from ..engine.manifest import Manifest
 
-            manifests = sorted(project.runs_dir.glob("*/manifest.json"))
-            if not manifests:
+            directory = latest_run(project.runs_dir, purpose="run")
+            if directory is None:
                 raise ProjectError("no run manifest to report from")
-            manifest = Manifest.load(manifests[-1])
+            manifest = Manifest.load(directory / "manifest.json")
 
             check_report = run_check(
                 codebook=codebook,
                 config=project.config,
                 splits=splits,
                 gold=GoldStore(project.gold_path),
-                scores=json.loads(
-                    sorted(project.runs_dir.glob("*/probabilities.json"))[-1].read_text(
-                        encoding="utf-8"
-                    )
-                ),
+                scores=json.loads((directory / "probabilities.json").read_text(encoding="utf-8")),
                 backend_name=record.backend,
                 model_version=record.model_version,
                 corpus_hash=corpus.hash,
@@ -838,6 +873,97 @@ def export(
         return
     for path in written:
         console.print(f"wrote {path}")
+
+
+@app.command()
+def compare(
+    backends: Annotated[str, typer.Option("--backends", help="Comma-separated backend names.")],
+    resamples: Annotated[int, typer.Option("--resamples")] = 500,
+    yes: Annotated[bool, typer.Option("--yes", help="Approve over-budget runs.")] = False,
+    as_json: JsonFlag = False,
+) -> None:
+    """Compare backends on your own gold sample (§8.8).
+
+    Scores the gold items with each backend in turn and reports what each would
+    certify, and at what coverage, against the same held-out human coding. This
+    is how you find out what a local model costs you in hours, rather than
+    taking a claim about it on trust.
+    """
+    try:
+        project = _project()
+        codebook = project.codebook()
+        corpus = project.corpus()
+        splits = project.splits()
+        splits.require_corpus(corpus.hash)
+        store = GoldStore(project.gold_path)
+
+        gold_ids = sorted({r.item_id for r in store.all_records()})
+        if not gold_ids:
+            raise ProjectError(
+                "no gold sample to compare against",
+                hint="Run `scruple gold` first -- a comparison needs shared ground truth.",
+            )
+        names = [b.strip() for b in backends.split(",") if b.strip()]
+        if len(names) < 2:
+            raise ValidationError(
+                "a comparison needs at least two backends",
+                hint=f"Available: {', '.join(available())}.",
+            )
+
+        sample = corpus.subset(gold_ids)
+        rows: list[ComparisonRow] = []
+        for name in names:
+            backend = build_backend(project.config.backend.model_copy(update={"name": name}))
+            # One cache file per backend: serving one model's probability for
+            # another would be a one-character mistake with no visible symptom.
+            with Cache(project.state_dir / "compare" / f"{name}.sqlite") as cache:
+                engine = Engine(backend=backend, config=project.config, cache=cache)
+                scored = engine.run(sample, codebook, approved=yes)
+            report = run_check(
+                codebook=codebook,
+                config=project.config,
+                splits=splits,
+                gold=store,
+                scores=scored.scores,
+                backend_name=name,
+                model_version=backend.model_version(),
+                corpus_hash=corpus.hash,
+                bootstrap_resamples=resamples,
+                sealed_test=splits.sealed(Split.TEST),
+            )
+            usage = getattr(backend, "usage", None)
+            rows.append(
+                ComparisonRow(
+                    backend=name,
+                    model_version=backend.model_version(),
+                    usable=[c.code_id for c in report.usable],
+                    codes=len(report.codes),
+                    share_needing_review=report.corpus_share_needing_review,
+                    cost_usd=usage.cost_usd if usage else 0.0,
+                    kappa={c.code_id: (c.kappa.value if c.kappa else None) for c in report.codes},
+                )
+            )
+    except ScrupleError as error:
+        _fail("compare", error, as_json)
+        return
+
+    if as_json:
+        _emit("compare", {"backends": [asdict(row) for row in rows]}, True)
+        return
+
+    console.print()
+    for row in rows:
+        console.print(
+            f"[bold]{row.backend}[/bold] ({row.model_version}): "
+            f"{len(row.usable)} of {row.codes} codes usable · "
+            f"{row.share_needing_review * 100:.1f}% of items need you"
+            + (f" · ${row.cost_usd:.2f}" if row.cost_usd else "")
+        )
+    console.print(
+        "\n[dim]A local model is usually slower and less accurate than a hosted one. "
+        "The difference shows up as coverage -- more items routed to you -- and this "
+        "is where you see how much.[/dim]"
+    )
 
 
 @app.command()

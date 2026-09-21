@@ -573,3 +573,19 @@ class TestEvidenceArithmetic:
     def test_at_least_one_candidate_is_required(self) -> None:
         with pytest.raises(ValueError, match="at least one"):
             candidate_weights(0)
+
+
+class TestEvidenceShortfallDirectly:
+    """`evidence_shortfall` is public, so it must behave on any selection."""
+
+    def test_a_passing_selection_has_no_shortfall(self) -> None:
+        probs, gold = _clean_coder(n_pos=300, n_neg=600, err_pos=5, err_neg=3)
+        assert fit_thresholds(probs, gold).evidence_shortfall is None
+
+    def test_insufficient_evidence_has_no_shortfall_to_report(self) -> None:
+        # It never got as far as evaluating candidates, so there is no count to
+        # quote; the positives message covers this case instead.
+        probs, gold = _clean_coder(n_pos=9, n_neg=500, err_pos=0, err_neg=0)
+        selection = fit_thresholds(probs, gold)
+        assert selection.candidates == ()
+        assert selection.evidence_shortfall is None
