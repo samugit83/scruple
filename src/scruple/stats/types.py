@@ -113,7 +113,17 @@ class Confusion:
 
     @property
     def n(self) -> float:
-        return self.a + self.b + self.c + self.d
+        """Total weight, summed symmetrically.
+
+        Grouped as ``(a + d) + (b + c)`` rather than left to right, so that
+        relabelling yes<->no -- which maps a<->d and b<->c -- produces a
+        bit-identical total. Left-to-right grouping differs by one ulp under
+        that swap, and where chance agreement is close to 1 the division
+        amplifies the ulp into a visible difference in kappa: on the table
+        (1024, 1e-6, 1e-6, 0) it moved kappa by 1.1e-07. Found by
+        tests/property/test_stats_invariants.py.
+        """
+        return (self.a + self.d) + (self.b + self.c)
 
     @property
     def gold_positive(self) -> float:

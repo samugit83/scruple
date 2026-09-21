@@ -233,3 +233,30 @@ class TestKrippendorffAlpha:
             krippendorff_alpha(gold, pred).value
             == krippendorff_alpha(gold, pred, weights=[1.0] * 6).value
         )
+
+
+class TestNumericalSymmetry:
+    """Relabelling must not change kappa, even where the table is ill-conditioned.
+
+    Found by the property test in tests/property: summing the confusion cells
+    left to right gives a total that differs by one ulp under the a<->d,
+    b<->c swap, and where chance agreement is close to 1 the division amplifies
+    that ulp into a visible difference.
+    """
+
+    ILL_CONDITIONED = (1024.0, 1e-06, 1e-06, 0.0)
+
+    def test_the_total_is_bit_identical_under_relabelling(self) -> None:
+        a, b, c, d = self.ILL_CONDITIONED
+        assert Confusion(a=a, b=b, c=c, d=d).n == Confusion(a=d, b=c, c=b, d=a).n
+
+    def test_kappa_is_bit_identical_under_relabelling(self) -> None:
+        a, b, c, d = self.ILL_CONDITIONED
+        original = cohens_kappa_from_confusion(Confusion(a=a, b=b, c=c, d=d))
+        swapped = cohens_kappa_from_confusion(Confusion(a=d, b=c, c=b, d=a))
+        assert original.value == swapped.value
+
+    def test_the_total_still_equals_the_plain_sum(self) -> None:
+        cm = Confusion(a=170, b=30, c=40, d=760)
+        assert cm.n == 1000
+        assert cm.n == cm.agreements + cm.errors
