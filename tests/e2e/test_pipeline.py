@@ -27,20 +27,7 @@ runner = CliRunner()
 @pytest.fixture
 def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """A private copy of the example, so tests never mutate the shipped one."""
-    root = tmp_path / "vaccine_survey"
-    shutil.copytree(EXAMPLE, root)
-
-    # Start from exactly what ships. Only splits.json and gold.jsonl are
-    # committed; everything else under .scruple/ is derived, and a stale
-    # calibration.json left by a local run would quietly make "refuses without
-    # calibration" pass for the wrong reason.
-    shutil.rmtree(root / "out", ignore_errors=True)
-    shipped = {"splits.json", "gold.jsonl"}
-    for path in (root / ".scruple").iterdir():
-        if path.name in shipped:
-            continue
-        shutil.rmtree(path, ignore_errors=True) if path.is_dir() else path.unlink()
-
+    root = shipped_copy(tmp_path / "vaccine_survey")
     monkeypatch.chdir(root)
     # Prove no key is needed: remove every one a backend might reach for.
     for variable in ("TYPESAFE_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
@@ -50,6 +37,41 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 def invoke(*args: str):  # type: ignore[no-untyped-def]
     return runner.invoke(app, list(args), catch_exceptions=False)
+
+
+def shipped_copy(root: Path) -> Path:
+    """A copy of the example in exactly the state it ships in.
+
+    Only splits.json and gold.jsonl are committed; everything else under
+    .scruple/ is derived, and a stale calibration.json left by a local run
+    would quietly make "refuses without calibration" pass for the wrong reason.
+    """
+    shutil.copytree(EXAMPLE, root)
+    shutil.rmtree(root / "out", ignore_errors=True)
+    for path in (root / ".scruple").iterdir():
+        if path.name in {"splits.json", "gold.jsonl"}:
+            continue
+        shutil.rmtree(path, ignore_errors=True) if path.is_dir() else path.unlink()
+    return root
+
+
+@pytest.fixture(scope="module")
+def exported_once(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """The full pipeline, run once for every test that only reads its outputs.
+
+    Each check/run/export cycle over the 1,200-item example takes a couple of
+    seconds; running it per test made the suite slow enough to be skipped,
+    which is the state in which tests stop catching anything.
+    """
+    root = shipped_copy(tmp_path_factory.mktemp("exported") / "vaccine_survey")
+    with pytest.MonkeyPatch.context() as patch:
+        patch.chdir(root)
+        for variable in ("TYPESAFE_API_KEY", "JEV_API_KEY", "OPENAI_API_KEY"):
+            patch.delenv(variable, raising=False)
+        assert invoke("check", "--resamples", "200").exit_code == ExitCode.OK
+        assert invoke("run", "--yes").exit_code == ExitCode.OK
+        assert invoke("export").exit_code == ExitCode.OK
+    return root
 
 
 class TestTheExampleRunsOffline:
@@ -103,11 +125,8 @@ class TestOutputSchema:
     """§14.9: snapshot the schema; changes must be deliberate and appear in the diff."""
 
     @pytest.fixture
-    def exported(self, project: Path) -> Path:
-        invoke("check", "--resamples", "100")
-        invoke("run", "--yes")
-        invoke("export", "--no-chart")
-        return project / "out"
+    def exported(self, exported_once: Path) -> Path:
+        return exported_once / "out"
 
     def test_coded_csv_carries_original_columns_plus_three_per_code(self, exported: Path) -> None:
         with (exported / "coded.csv").open(encoding="utf-8") as handle:
@@ -150,6 +169,10 @@ class TestReportStability:
         invoke("export", "--no-chart")
         return (project / "out" / "validation_report.md").read_text(encoding="utf-8")
 
+    @pytest.fixture
+    def report(self, exported_once: Path) -> str:
+        return (exported_once / "out" / "validation_report.md").read_text(encoding="utf-8")
+
     def test_two_runs_produce_the_same_report(self, project: Path) -> None:
         first = normalise_for_comparison(self.build(project))
         second = normalise_for_comparison(self.build(project))
@@ -167,34 +190,30 @@ class TestReportStability:
         # ...and every difference must be on a line marked volatile.
         assert all("<!-- volatile -->" in a for a, _ in differing)
 
-    def test_the_report_states_what_the_guarantee_does_not_cover(self, project: Path) -> None:
+    def test_the_report_states_what_the_guarantee_does_not_cover(self, report: str) -> None:
         # §8.9: the report MUST say the guarantee covers only the model-decided
         # subset, rather than letting a reader assume it covers everything.
-        report = self.build(project)
         assert "only the model-decided subset" in report
         assert "per code" in report
         assert "marginal over items" in report
 
-    def test_the_report_states_the_sampling_assumption(self, project: Path) -> None:
+    def test_the_report_states_the_sampling_assumption(self, report: str) -> None:
         # §8.6: the assumption must be stated in plain language.
-        report = self.build(project)
         assert "random sample of the corpus" in report
         assert "hand-picked sample would break it" in report
 
-    def test_the_report_names_the_aggregation_rule(self, project: Path) -> None:
+    def test_the_report_names_the_aggregation_rule(self, report: str) -> None:
         # §10.3: changing it invalidates calibration, so it has to be on record.
-        assert "aggregation=`max`" in self.build(project)
+        assert "aggregation=`max`" in report
 
-    def test_the_report_carries_a_methods_paragraph(self, project: Path) -> None:
-        report = self.build(project)
+    def test_the_report_carries_a_methods_paragraph(self, report: str) -> None:
         assert "## Methods paragraph" in report
         assert "coded deductively against an author-written codebook" in report
 
-    def test_the_report_lists_limitations_as_a_section(self, project: Path) -> None:
+    def test_the_report_lists_limitations_as_a_section(self, report: str) -> None:
         # §15: honest limitations are first-class, not a footnote.
-        report = self.build(project)
         assert "## Limitations" in report
-        assert "not ground truth" in report or "not ground truth" in report.lower()
+        assert "not ground truth" in report.lower()
 
 
 class TestExitCodes:
