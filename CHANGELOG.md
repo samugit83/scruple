@@ -9,6 +9,10 @@ Breaking it is a breaking change.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.0] - 2026-09-22
+
 ### Added
 
 - **Statistics layer** (`scruple.stats`): Cohen's κ, Krippendorff's α,
@@ -65,3 +69,6 @@ reasoning.
   thesis holds on interpretive coding.
 - `score` and `choice` code types are v1.5 and are refused with a clear error.
 - The R package of Phase 2 is not built.
+
+[Unreleased]: https://github.com/samugit83/scruple/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/samugit83/scruple/releases/tag/v0.1.0

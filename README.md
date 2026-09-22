@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/scruple.jpeg" alt="scruple: certified, abstaining qualitative coding" width="720">
+<img src="https://raw.githubusercontent.com/samugit83/scruple/main/docs/scruple.jpeg" alt="scruple: certified, abstaining qualitative coding" width="720">
 
 <h3>Hand-code 16% of your corpus. Defend all of it.</h3>
 
@@ -12,13 +12,13 @@
 
 <p>
   <a href="https://github.com/samugit83/scruple/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/samugit83/scruple/ci.yml?branch=main&label=CI&logo=github"></a>
-  <a href="CHANGELOG.md"><img alt="version 0.1.0" src="https://img.shields.io/badge/version-0.1.0-1f6feb"></a>
+  <a href="https://github.com/samugit83/scruple/blob/main/CHANGELOG.md"><img alt="version 0.1.0" src="https://img.shields.io/badge/version-0.1.0-1f6feb"></a>
   <img alt="Python 3.11, 3.12, 3.13" src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-3776ab?logo=python&logoColor=white">
-  <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/license-MIT-2da44e"></a>
+  <a href="https://github.com/samugit83/scruple/blob/main/LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/license-MIT-2da44e"></a>
   <br>
-  <a href=".github/workflows/ci.yml"><img alt="statistics layer: 100% line and branch coverage" src="https://img.shields.io/badge/stats%20coverage-100%25%20line%20%2B%20branch-2da44e"></a>
-  <a href="docs/methodology.md"><img alt="class-conditional guarantee at alpha = 0.10" src="https://img.shields.io/badge/guarantee-class--conditional%20%CE%B1%20%3D%200.10-8957e5"></a>
-  <a href="docs/privacy.md"><img alt="can run entirely offline" src="https://img.shields.io/badge/data-can%20stay%20on%20your%20machine-0969da"></a>
+  <a href="https://github.com/samugit83/scruple/blob/main/.github/workflows/ci.yml"><img alt="statistics layer: 100% line and branch coverage" src="https://img.shields.io/badge/stats%20coverage-100%25%20line%20%2B%20branch-2da44e"></a>
+  <a href="https://github.com/samugit83/scruple/blob/main/docs/methodology.md"><img alt="class-conditional guarantee at alpha = 0.10" src="https://img.shields.io/badge/guarantee-class--conditional%20%CE%B1%20%3D%200.10-8957e5"></a>
+  <a href="https://github.com/samugit83/scruple/blob/main/docs/privacy.md"><img alt="can run entirely offline" src="https://img.shields.io/badge/data-can%20stay%20on%20your%20machine-0969da"></a>
   <img alt="status: alpha" src="https://img.shields.io/badge/status-alpha-d29922">
 </p>
 
@@ -26,8 +26,8 @@
   <a href="#your-first-real-run"><b>Get started</b></a> ·
   <a href="#the-gap">The evidence</a> ·
   <a href="#what-you-get">What you get</a> ·
-  <a href="docs/methodology.md">Methodology</a> ·
-  <a href="docs/privacy.md">Privacy</a> ·
+  <a href="https://github.com/samugit83/scruple/blob/main/docs/methodology.md">Methodology</a> ·
+  <a href="https://github.com/samugit83/scruple/blob/main/docs/privacy.md">Privacy</a> ·
   <a href="#honest-limitations">Limitations</a>
 </p>
 
@@ -55,7 +55,7 @@ data it never fitted to.
 
 ## The gap
 
-![Reliability of the finished dataset against human labour](docs/reliability_vs_labour.png)
+![Reliability of the finished dataset against human labour](https://raw.githubusercontent.com/samugit83/scruple/main/docs/reliability_vs_labour.png)
 
 *Reliability of the finished dataset against the share of a corpus a person
 must code, on the worked example in this repository. Choosing which items to
@@ -141,7 +141,7 @@ Vercel AI Gateway key, and write a `.env` beside `scruple.yml`:
 JEV_API_KEY=...
 ```
 
-[.env.example](.env.example) lists the rest: `JEV_BASE_URL` if you are behind a
+[.env.example](https://github.com/samugit83/scruple/blob/main/.env.example) lists the rest: `JEV_BASE_URL` if you are behind a
 proxy, and `JEV_MODEL` if you need to pin an exact model version, which you do
 as soon as published accuracy numbers depend on it.
 
@@ -152,7 +152,7 @@ history is a live key forever, even after you delete the file.
 > data. If yours is, and a hosted API has not been cleared with your ethics
 > committee, set `backend.name: local` in `scruple.yml` and point it at vLLM,
 > llama.cpp or Ollama instead. Nothing then leaves the machine. See
-> [docs/privacy.md](docs/privacy.md).
+> [docs/privacy.md](https://github.com/samugit83/scruple/blob/main/docs/privacy.md).
 
 ### 4. Write the codebook
 
@@ -419,14 +419,14 @@ does not help them.
 
 The cache stores hashes only, never text, so `scruple purge --gold` destroys
 the personal data while leaving the expensive model work intact. Details in
-[docs/privacy.md](docs/privacy.md), including the threat model for untrusted
+[docs/privacy.md](https://github.com/samugit83/scruple/blob/main/docs/privacy.md), including the threat model for untrusted
 corpus text.
 
 ---
 
 ## Methodology
 
-The statistics are the product. [docs/methodology.md](docs/methodology.md)
+The statistics are the product. [docs/methodology.md](https://github.com/samugit83/scruple/blob/main/docs/methodology.md)
 describes them for a methodologist reading sceptically: the three-way split,
 the class-conditional risk control and why a marginal one is degenerate, the
 arithmetic for how much gold coding you need, why selective κ is a diagnostic
@@ -486,7 +486,7 @@ tells you when it cannot do it.
 }
 ```
 
-Machine-readable metadata is in [CITATION.cff](CITATION.cff). If you use this
+Machine-readable metadata is in [CITATION.cff](https://github.com/samugit83/scruple/blob/main/CITATION.cff). If you use this
 in published work, please cite it, and please report what it refused, not only
 what it coded.
 
@@ -500,4 +500,4 @@ that the design's kill criterion rests on has not been run against published
 qualitative-coding corpora, so the headline claim above is demonstrated on a
 synthetic corpus with a real model, not yet on the literature's datasets.
 
-Licence: MIT. Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
+Licence: MIT. Contributing: [CONTRIBUTING.md](https://github.com/samugit83/scruple/blob/main/CONTRIBUTING.md).
