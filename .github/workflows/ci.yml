@@ -12,14 +12,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # §14.2: no test in any tier may touch the network. Point every proxy
-  # variable at a black hole so an accidental live call fails loudly and fast
-  # rather than passing on someone's machine and failing on someone else's.
-  HTTP_PROXY: http://127.0.0.1:9
-  HTTPS_PROXY: http://127.0.0.1:9
-  NO_PROXY: ""
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -60,6 +52,13 @@ jobs:
       - run: uv sync --all-extras --python ${{ matrix.python }}
       - name: unit, property, contract, integration and e2e
         run: uv run pytest -m "not statistical and not slow" -q
+        env:
+          # §14.2: no test in any tier may touch the network. Point every proxy
+          # variable at a black hole so an accidental live call fails loudly
+          # and fast rather than passing on someone's machine and failing on
+          # someone else's. Scoped to the test steps: checkout and `uv sync`
+          # legitimately need the network, and a workflow-level block stops
+          # the job before a single test runs.
 
   coverage-gate:
     runs-on: ubuntu-latest
@@ -74,11 +73,25 @@ jobs:
           uv run pytest -m "not statistical and not slow" -q \
             --cov=src/scruple/stats --cov-report=term-missing \
             --cov-fail-under=100
+        env:
+          # §14.2: no test in any tier may touch the network. Point every proxy
+          # variable at a black hole so an accidental live call fails loudly
+          # and fast rather than passing on someone's machine and failing on
+          # someone else's. Scoped to the test steps: checkout and `uv sync`
+          # legitimately need the network, and a workflow-level block stops
+          # the job before a single test runs.
       - name: overall coverage
         run: |
           uv run pytest -m "not statistical and not slow" -q \
             --cov=src/scruple --cov-report=term \
             --cov-fail-under=90
+        env:
+          # §14.2: no test in any tier may touch the network. Point every proxy
+          # variable at a black hole so an accidental live call fails loudly
+          # and fast rather than passing on someone's machine and failing on
+          # someone else's. Scoped to the test steps: checkout and `uv sync`
+          # legitimately need the network, and a workflow-level block stops
+          # the job before a single test runs.
 
   statistical:
     # The guarantee itself, by simulation. Slow, so it runs on changes to the
@@ -105,6 +118,13 @@ jobs:
       - name: statistical validity simulation
         if: steps.changed.outputs.run == 'true'
         run: uv run pytest tests/statistical -q
+        env:
+          # §14.2: no test in any tier may touch the network. Point every proxy
+          # variable at a black hole so an accidental live call fails loudly
+          # and fast rather than passing on someone's machine and failing on
+          # someone else's. Scoped to the test steps: checkout and `uv sync`
+          # legitimately need the network, and a workflow-level block stops
+          # the job before a single test runs.
 
   performance:
     # §14.12: guards against accidental quadratic behaviour and a cache that is
@@ -119,6 +139,13 @@ jobs:
           enable-cache: true
       - run: uv sync --all-extras
       - run: uv run pytest -m slow -q
+        env:
+          # §14.2: no test in any tier may touch the network. Point every proxy
+          # variable at a black hole so an accidental live call fails loudly
+          # and fast rather than passing on someone's machine and failing on
+          # someone else's. Scoped to the test steps: checkout and `uv sync`
+          # legitimately need the network, and a workflow-level block stops
+          # the job before a single test runs.
 
   mutation:
     # §14.10: the guard against tests that execute code without asserting on
