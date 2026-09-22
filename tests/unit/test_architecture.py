@@ -1,4 +1,4 @@
-"""Architectural rules from the design (plan §6).
+"""Architectural rules from the design (§6).
 
 These are not style checks. The layering is what makes the statistics testable
 in isolation and the engine free of decisions, and both properties are easy to

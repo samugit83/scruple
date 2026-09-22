@@ -1,4 +1,4 @@
-"""Terminal coding for `gold` and `review` (plan §12).
+"""Terminal coding for `gold` and `review` (§12).
 
 One item at a time: `y` / `n` / `?` (skip) / `b` (back), with progress and
 elapsed time.

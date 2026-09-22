@@ -1,4 +1,4 @@
-"""Contract tests for the LLM and local backends (plan §9.2, §9.3, §14.7)."""
+"""Contract tests for the LLM and local backends (§9.2, §9.3, §14.7)."""
 
 from __future__ import annotations
 

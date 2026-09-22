@@ -1,4 +1,4 @@
-"""Orchestration, caching, batching and retries (plan §10)."""
+"""Orchestration, caching, batching and retries (§10)."""
 
 from .budget import CostEstimate, estimate_cost, needs_confirmation, require_confirmation
 from .cache import Cache, CacheStats

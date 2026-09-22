@@ -1,4 +1,4 @@
-"""The Jev backend (plan §9.1) -- the default, and the model the thesis rests on.
+"""The Jev backend (§9.1) -- the default, and the model the thesis rests on.
 
 Jev is trained with RLCD to produce calibrated decisions, which is the property
 the whole project depends on: without probabilities that mean what they say,

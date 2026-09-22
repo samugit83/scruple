@@ -1,4 +1,4 @@
-"""Turning probabilities into the delivered dataset (plan §7.4, §8.9).
+"""Turning probabilities into the delivered dataset (§7.4, §8.9).
 
 Three provenances end up in `coded.csv`, and the report must be able to say how
 much of the data came from each (§8.9):

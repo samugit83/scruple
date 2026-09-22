@@ -1,4 +1,4 @@
-"""The cost gate (plan §10.1).
+"""The cost gate (§10.1).
 
 Researchers are not engineers and must never be surprised by a bill. So before
 any run that looks expensive, scruple prints what it is about to do and asks.

@@ -1,4 +1,4 @@
-"""Generate synthetic gold datasets with known properties (plan §14.11).
+"""Generate synthetic gold datasets with known properties (§14.11).
 
 §14.11 asks for a generator producing gold datasets with *specified*
 prevalence, agreement and calibration quality, so tests can assert against

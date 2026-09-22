@@ -1,4 +1,4 @@
-"""The methods paragraph (plan §0.5, §15).
+"""The methods paragraph (§0.5, §15).
 
 A paragraph the researcher can paste into a paper, stating what was done and
 what was assumed, in the register a methods section uses. Getting this right

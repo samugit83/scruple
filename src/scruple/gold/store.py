@@ -1,4 +1,4 @@
-"""The gold and review stores (plan §6).
+"""The gold and review stores (§6).
 
 `gold.jsonl` is **append-only** and records the timestamp, the coder id, and
 whether model output was visible at coding time -- always ``false`` for gold.

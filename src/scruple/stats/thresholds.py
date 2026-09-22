@@ -1,4 +1,4 @@
-"""Class-conditional (Mondrian) threshold selection (plan §8.6).
+"""Class-conditional (Mondrian) threshold selection (§8.6).
 
 The guarantee this fits is
 
@@ -15,7 +15,7 @@ all-negative coder is wrong on 100% of the accepted positive class.
 
 Multiplicity: the grid is scanned in full and corrected with a **weighted**
 Bonferroni over its candidates, the weights falling geometrically from the
-highest-coverage band. The plan's §8.6 originally specified a fixed-sequence
+highest-coverage band. §8.6 originally specified a fixed-sequence
 walk from the most conservative band, which needs no within-code correction,
 and that turned out to be unsound here -- see `_WHY_NOT_FIXED_SEQUENCE` and
 `_WHY_WEIGHTED` below.

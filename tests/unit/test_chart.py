@@ -1,4 +1,4 @@
-"""Unit tests for the hero chart (plan §8.8).
+"""Unit tests for the hero chart (§8.8).
 
 The chart is the Phase 0 deliverable, the README image and the core figure of
 the paper, so its framing and code-selection logic are worth pinning: a chart

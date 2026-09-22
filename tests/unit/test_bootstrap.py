@@ -1,4 +1,4 @@
-"""Unit tests for the stratified bootstrap (plan §8.1, §14.3)."""
+"""Unit tests for the stratified bootstrap (§8.1, §14.3)."""
 
 from __future__ import annotations
 

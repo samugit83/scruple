@@ -1,4 +1,4 @@
-"""Backend registry and the offline recorded backend (plan §9, §13)."""
+"""Backend registry and the offline recorded backend (§9, §13)."""
 
 from __future__ import annotations
 

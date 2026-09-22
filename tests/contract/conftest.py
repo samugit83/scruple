@@ -1,4 +1,4 @@
-"""Contract-test fixtures: recorded responses, never a live call (plan §14.7).
+"""Contract-test fixtures: recorded responses, never a live call (§14.7).
 
 §14.2 forbids network access in every tier, and CI runs with networking
 disabled. These fixtures serve recorded bodies through an httpx transport, so a

@@ -1,4 +1,4 @@
-"""Performance guards (plan §14.12).
+"""Performance guards (§14.12).
 
 Not micro-benchmarks. These catch the shapes of mistake that make a tool
 unusable on a real corpus: accidental quadratic behaviour, and a warm cache

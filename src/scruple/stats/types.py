@@ -1,6 +1,6 @@
 """Shared result types for the statistics layer.
 
-Design rule (plan §6): this package MUST NOT import from ``scruple.backends``.
+Design rule (§6): this package MUST NOT import from ``scruple.backends``.
 The statistics are the credibility of the project, so they stay testable in
 isolation against synthetic data with known properties.
 """
@@ -42,7 +42,7 @@ class ReasonCode(StrEnum):
 
 
 class Verdict(StrEnum):
-    """Per-code outcome of ``scruple check`` (plan §12)."""
+    """Per-code outcome of ``scruple check`` (§12)."""
 
     OK = "ok"
     WEAK = "weak"

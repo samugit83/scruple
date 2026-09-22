@@ -1,4 +1,4 @@
-"""The scruple command line (plan §12).
+"""The scruple command line (§12).
 
 All commands operate on the current project directory. Human-readable text on
 stdout, `--json` available for every command -- and that JSON is a public,

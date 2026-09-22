@@ -1,4 +1,4 @@
-"""Drift detection and applying calibration (plan §10.4, §7.4, §8.9)."""
+"""Drift detection and applying calibration (§10.4, §7.4, §8.9)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""CLI surface tests (plan §12, §13.1).
+"""CLI surface tests (§12, §13.1).
 
 `--json` is a public versioned interface: the Phase 2 R package wraps this CLI
 as a subprocess contract rather than reimplementing the statistics, so the

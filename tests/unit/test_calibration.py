@@ -1,4 +1,4 @@
-"""Unit tests for calibration diagnostics (plan §8.3, §14.3)."""
+"""Unit tests for calibration diagnostics (§8.3, §14.3)."""
 
 from __future__ import annotations
 

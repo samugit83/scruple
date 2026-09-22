@@ -1,4 +1,4 @@
-"""Property-based invariants for the statistics layer (plan §14.5)."""
+"""Property-based invariants for the statistics layer (§14.5)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Calibration diagnostics (plan §8.3).
+"""Calibration diagnostics (§8.3).
 
 These are diagnostics, not the guarantee. The guarantee comes from the
 class-conditional threshold procedure in ``thresholds.py``; what lives here

@@ -46,9 +46,9 @@ spss = ["pyreadstat>=1.2"]
 all = ["matplotlib>=3.7", "pyarrow>=14.0", "pyreadstat>=1.2"]
 
 [project.urls]
-Homepage = "https://github.com/scruple-tool/scruple"
-Documentation = "https://github.com/scruple-tool/scruple/tree/main/docs"
-Source = "https://github.com/scruple-tool/scruple"
+Homepage = "https://github.com/samugit83/scruple"
+Documentation = "https://github.com/samugit83/scruple/tree/main/docs"
+Source = "https://github.com/samugit83/scruple"
 
 [project.scripts]
 scruple = "scruple.cli.main:app"

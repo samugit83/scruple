@@ -1,4 +1,4 @@
-"""Generate the synthetic `vaccine_survey` example (plan §13).
+"""Generate the synthetic `vaccine_survey` example (§13).
 
 Wholly synthetic. §14.11 forbids committing real personal data or a real
 corpus, and an example shipping real survey answers would be exactly the thing

@@ -2,7 +2,7 @@
 
 This package is the product, so it is deliberately self-contained: it depends
 only on numpy and scipy, and it MUST NOT import from ``scruple.backends`` or
-any other part of the package (plan §6, design rule 1). That keeps every claim
+any other part of the package (§6, design rule 1). That keeps every claim
 in the validation report testable in isolation against synthetic data with
 analytically known answers.
 """

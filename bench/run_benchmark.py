@@ -1,4 +1,4 @@
-"""Phase 0: score a prepared corpus with several backends and compare (plan §11).
+"""Phase 0: score a prepared corpus with several backends and compare (§11).
 
 This produces the chart the kill criterion rests on — final reliability of the
 whole corpus against human labour, per backend, with a random-selection
@@ -105,7 +105,7 @@ def write_report(results: list[BackendResult], dataset: Path, out: Path) -> Path
         "Final reliability of the whole corpus against human labour, per backend.",
         "The number that matters is the gap between each curve and the random",
         "baseline: that gap is what calibrated abstention buys, in hours at a",
-        "fixed quality bar. If it is small, the thesis has failed (plan §3).",
+        "fixed quality bar. If it is small, the thesis has failed (§3).",
         "",
         "## Backends",
         "",

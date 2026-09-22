@@ -1,4 +1,4 @@
-"""Unit tests for reading `.env` (plan §9.1).
+"""Unit tests for reading `.env` (§9.1).
 
 A key that reaches a log, a manifest or a report is a leaked key, so these
 check the loader keeps values out of its own return value as well as parsing

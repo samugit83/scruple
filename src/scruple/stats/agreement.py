@@ -1,4 +1,4 @@
-"""Inter-rater agreement statistics (plan §8.1, §8.2).
+"""Inter-rater agreement statistics (§8.1, §8.2).
 
 Cohen's kappa and Krippendorff's alpha are implemented independently, from
 their own definitions, because §14.3 uses their agreement on binary two-coder

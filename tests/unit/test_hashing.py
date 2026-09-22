@@ -1,4 +1,4 @@
-"""Unit tests for canonical normalisation and hashing (plan §7.1, §9.4)."""
+"""Unit tests for canonical normalisation and hashing (§7.1, §9.4)."""
 
 from __future__ import annotations
 

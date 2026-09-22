@@ -1,4 +1,4 @@
-"""LLM backends for comparison, and for users without Jev access (plan §9.2).
+"""LLM backends for comparison, and for users without Jev access (§9.2).
 
 Their purpose is the benchmark comparison. §9.2 is explicit: implement them
 fairly, and **do not sandbag them**. A rigged comparison destroys the project's
@@ -280,7 +280,7 @@ class OpenAIBackend(OpenAICompatibleBackend):
 
 
 class LocalBackend(OpenAICompatibleBackend):
-    """An OpenAI-compatible endpoint on this machine or network (plan §9.3).
+    """An OpenAI-compatible endpoint on this machine or network (§9.3).
 
     Not optional. Interview transcripts, survey free text and complaint records
     are personal data, often special-category, and sending them to a
@@ -300,7 +300,7 @@ class LocalBackend(OpenAICompatibleBackend):
 
 
 class AnthropicBackend(BaseBackend):
-    """Claude, via the Messages API (plan §9.2, comparison only).
+    """Claude, via the Messages API (§9.2, comparison only).
 
     The Messages API does not expose token logprobs, so this backend uses
     k-sample voting. That is a real cost and a real limitation, stated here

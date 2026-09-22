@@ -1,4 +1,4 @@
-"""Drift detection (plan §10.4).
+"""Drift detection (§10.4).
 
 `run` refuses to proceed if any code hash, the chunking settings, or the
 aggregation rule differ from those recorded at calibration time, and the error

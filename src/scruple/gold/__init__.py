@@ -1,4 +1,4 @@
-"""Blind gold-sample collection and human review (plan §8.5, §12)."""
+"""Blind gold-sample collection and human review (§8.5, §12)."""
 
 from .sampling import (
     ENRICHED,

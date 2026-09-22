@@ -1,4 +1,4 @@
-"""Reading `.env` (plan §9.1).
+"""Reading `.env` (§9.1).
 
 A researcher should not have to export shell variables to use the tool. If a
 `.env` sits in the project directory, scruple reads it -- without overwriting

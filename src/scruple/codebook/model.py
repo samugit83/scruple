@@ -1,4 +1,4 @@
-"""The codebook: the researcher's categories (plan §7.1).
+"""The codebook: the researcher's categories (§7.1).
 
 The codebook is the intellectual contribution of the study. scruple never
 invents, edits or extends it -- §5 puts inductive coding explicitly out of

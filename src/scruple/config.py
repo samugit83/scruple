@@ -1,4 +1,4 @@
-"""Project configuration: `scruple.yml` (plan §7.2)."""
+"""Project configuration: `scruple.yml` (§7.2)."""
 
 from __future__ import annotations
 
@@ -108,7 +108,7 @@ class ThresholdsConfig(_Strict):
     """Target class-conditional error rate, and the confidence it holds with.
 
     §7.2 proposed alpha = 0.05. Measured against the procedure, that target and
-    the plan's 300-item gold sample are mutually incompatible: certifying a
+    the original 300-item gold sample are mutually incompatible: certifying a
     backend whose true per-class error is 2% needs about 142 accepted items in
     the smaller class, which at 20% prevalence is a gold sample of roughly
     1,400. At alpha = 0.10 the same backend needs 36, or about 360 gold items --

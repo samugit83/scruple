@@ -1,4 +1,4 @@
-"""Loading and normalising a corpus (plan §7.2).
+"""Loading and normalising a corpus (§7.2).
 
 Supported inputs: CSV, JSONL, and a folder of plain-text files. Users bring
 text; transcription, OCR and PDF parsing are explicitly out of scope (§5).

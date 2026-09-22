@@ -1,4 +1,4 @@
-"""Unit tests for corpus loading, normalisation and chunking (plan §7.2, §10.3)."""
+"""Unit tests for corpus loading, normalisation and chunking (§7.2, §10.3)."""
 
 from __future__ import annotations
 

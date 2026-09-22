@@ -1,4 +1,4 @@
-"""Unit tests for agreement statistics (plan §8.1, §8.2, §14.3).
+"""Unit tests for agreement statistics (§8.1, §8.2, §14.3).
 
 Every expected value below is hand-computed from the formulae in §8.1 and
 recorded in the test, so a refactor cannot quietly change the mathematics.

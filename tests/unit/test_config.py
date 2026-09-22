@@ -1,4 +1,4 @@
-"""Unit tests for scruple.yml parsing (plan §7.2)."""
+"""Unit tests for scruple.yml parsing (§7.2)."""
 
 from __future__ import annotations
 

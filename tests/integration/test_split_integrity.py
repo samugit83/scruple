@@ -1,4 +1,4 @@
-"""The fitting path must not read the test split (plan §8.4, §14.4).
+"""The fitting path must not read the test split (§8.4, §14.4).
 
 §14.13 blocks merges when these fail. The unit tests in tests/unit/test_sealed.py
 check that a sealed payload refuses to be read; these check that the real

@@ -1,4 +1,4 @@
-"""Contract tests for the Jev backend (plan §9.1, §14.7).
+"""Contract tests for the Jev backend (§9.1, §14.7).
 
 The request and response shapes asserted here were captured from the live
 System One endpoint, not inferred -- see `tests/contract/fixtures/jev/` and the

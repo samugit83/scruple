@@ -1,4 +1,4 @@
-"""The synthetic generator must produce what it claims (plan §14.11).
+"""The synthetic generator must produce what it claims (§14.11).
 
 A generator that quietly drifts makes every test built on it meaningless, so
 its own properties are asserted here against known truth.

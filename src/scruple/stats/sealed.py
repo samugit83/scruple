@@ -1,4 +1,4 @@
-"""Sealing test data against the fitting code (plan §8.4).
+"""Sealing test data against the fitting code (§8.4).
 
 The three-way split only protects the result if nothing in the fitting path can
 read the test split. Relying on discipline is not enough: the mistake is a
@@ -72,7 +72,7 @@ class Sealed(Generic[T]):
             raise SealedDataError(
                 f"cannot unseal the {self.label!r} split for purpose {purpose!r}; "
                 f"allowed purposes are {sorted(ALLOWED_PURPOSES)}. "
-                "Fitting on this split would invalidate every number computed from it (plan §8.4)."
+                "Fitting on this split would invalidate every number computed from it (§8.4)."
             )
         log: list[str] = object.__getattribute__(self, "_log")
         log.append(purpose)
@@ -82,7 +82,7 @@ class Sealed(Generic[T]):
     def _refuse(self, how: str) -> NoReturn:
         raise SealedDataError(
             f"the {self.label!r} split is sealed and cannot be read by {how}; "
-            "call unseal(purpose=...) if this really is a reporting step (plan §8.4)."
+            "call unseal(purpose=...) if this really is a reporting step (§8.4)."
         )
 
     def __getattr__(self, name: str) -> NoReturn:
@@ -119,4 +119,4 @@ class Sealed(Generic[T]):
         self._refuse("deep copying")
 
     def __repr__(self) -> str:
-        return f"<Sealed {self.label!r} split: contents withheld (plan §8.4)>"
+        return f"<Sealed {self.label!r} split: contents withheld (§8.4)>"

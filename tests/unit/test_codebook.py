@@ -1,4 +1,4 @@
-"""Unit tests for codebook parsing and validation (plan §7.1)."""
+"""Unit tests for codebook parsing and validation (§7.1)."""
 
 from __future__ import annotations
 

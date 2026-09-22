@@ -1,4 +1,4 @@
-"""Golden snapshot tests (plan §14.9).
+"""Golden snapshot tests (§14.9).
 
 Snapshots the `scruple check` table and the coded.csv schema. A change to
 either must be deliberate and must show up in a diff, rather than arriving

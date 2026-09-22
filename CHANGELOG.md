@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The CLI's `--json` output is a public, versioned interface (plan §13.1).
+The CLI's `--json` output is a public, versioned interface (§13.1).
 Breaking it is a breaking change.
 
 ## [Unreleased]
@@ -30,11 +30,11 @@ Breaking it is a breaking change.
 - **Worked example** (`examples/vaccine_survey`): a synthetic corpus scored by
   the real Jev endpoint, running the full pipeline offline with no API key.
 
-### Changed from the design document
+### Changed during implementation
 
 Five changes were made during implementation because measurement disagreed with
-the plan. Each is recorded in `scruple_integration_plan.md` §19 with its
-reasoning, and in the code at the point it matters.
+the design. Each is recorded in the code at the point it matters, with its
+reasoning.
 
 - **Threshold selection scans the grid rather than walking it.** §8.6 specified
   a fixed-sequence walk from the most conservative band, stopping at the first
@@ -46,7 +46,7 @@ reasoning, and in the code at the point it matters.
 - **The grid correction is weighted, not flat.** A flat `δ/|Λ|` nearly doubles
   the gold sample required, for grid resolution nobody asked for. Shares now
   fall geometrically from the highest-coverage band.
-- **`alpha` defaults to 0.10 and `gold.n` to 600.** The plan's `alpha: 0.05`
+- **`alpha` defaults to 0.10 and `gold.n` to 600.** The original `alpha: 0.05`
   with 300 gold items cannot certify anything: a backend with 2% per-class error
   needs roughly 1,400 gold items at α = 0.05 against about 360 at α = 0.10.
   `docs/methodology.md` §4 carries the arithmetic.

@@ -1,4 +1,4 @@
-"""Synthetic test data (plan §14.11).
+"""Synthetic test data (§14.11).
 
 Synthetic only. Never commit real personal data, and never commit a real
 corpus.

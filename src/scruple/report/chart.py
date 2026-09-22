@@ -1,4 +1,4 @@
-"""The hero chart (plan §8.8).
+"""The hero chart (§8.8).
 
 Reliability of the finished dataset against the human labour needed to reach
 it, with a random-selection baseline. The vertical gap between the two curves

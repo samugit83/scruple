@@ -1,4 +1,4 @@
-"""Shared HTTP behaviour for network backends (plan §10.2).
+"""Shared HTTP behaviour for network backends (§10.2).
 
 Rate limits and transient server errors are retried with exponential backoff and
 jitter; `Retry-After` is honoured when the server sends it. Nothing is ever

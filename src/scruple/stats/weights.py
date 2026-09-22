@@ -1,4 +1,4 @@
-"""Sampling weights and inverse-probability weighting (plan §8.5).
+"""Sampling weights and inverse-probability weighting (§8.5).
 
 The gold sample combines a uniform stratum with an optional enriched stratum
 that oversamples likely-positive items so rare codes have enough positive

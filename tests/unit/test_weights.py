@@ -1,4 +1,4 @@
-"""Unit tests for inverse-probability weighting helpers (plan §8.5)."""
+"""Unit tests for inverse-probability weighting helpers (§8.5)."""
 
 from __future__ import annotations
 

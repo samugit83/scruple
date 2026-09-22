@@ -1,4 +1,4 @@
-"""Split-integrity tests (plan §8.4, §14.4).
+"""Split-integrity tests (§8.4, §14.4).
 
 The threshold fitter must never be able to read test data. These tests are the
 regression guard for that property; §14.13 blocks merges when they fail.

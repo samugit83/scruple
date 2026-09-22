@@ -1,4 +1,4 @@
-"""The scruple command line (plan §12)."""
+"""The scruple command line (§12)."""
 
 from .main import app, run_cli
 

@@ -1,4 +1,4 @@
-"""The on-disk project (plan §6).
+"""The on-disk project (§6).
 
     myproject/
       scruple.yml              project config

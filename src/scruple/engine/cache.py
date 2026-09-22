@@ -1,4 +1,4 @@
-"""The probability cache (plan §9.4).
+"""The probability cache (§9.4).
 
 Keyed per (item x code), not per item, so editing one code definition re-runs
 only that code. That is what makes the `try` loop of §12 feel instant, and that

@@ -1,4 +1,4 @@
-"""Terminal rendering and the --json envelope (plan §12, §13.1).
+"""Terminal rendering and the --json envelope (§12, §13.1).
 
 `--json` is a public, versioned interface: the R package of Phase 2 wraps the
 CLI as a subprocess contract rather than reimplementing the statistics, so

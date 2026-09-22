@@ -1,4 +1,4 @@
-"""Writing the three output files (plan §0.5, §7.4).
+"""Writing the three output files (§0.5, §7.4).
 
     coded.csv              the data, coded. Every competitor has this.
     abstentions.csv        the items it refused to code, with probabilities.

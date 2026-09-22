@@ -42,8 +42,7 @@ real API, run `bench/probe_jev.py` deliberately.
 
 ## The rules that are not negotiable
 
-These come from the design document (`scruple_integration_plan.md`), and CI
-blocks a merge on the first three.
+These come from the design, and CI blocks a merge on the first three.
 
 1. **`src/scruple/stats/` stays at 100% line and branch coverage.** No
    `# pragma: no cover`. The statistics are the product, so the test suite is
@@ -56,10 +55,9 @@ blocks a merge on the first three.
    broken and nothing else in the repository matters. Stop and fix that first.
 4. **Never fit and report on the same data.** There are assertions for this
    (`tests/integration/test_split_integrity.py`); do not remove them.
-5. **When the design document and reality disagree, reality wins** — and you
-   update the document in the same commit, with what you measured. §19 of the
-   plan is a changelog of exactly that, and several of its entries are
-   corrections to specified procedures that did not survive being run.
+5. **When the design and reality disagree, reality wins**, and you record what
+   you measured in the same commit. The changelog carries several such
+   corrections: specified procedures that did not survive being run.
 
 ## Writing tests
 

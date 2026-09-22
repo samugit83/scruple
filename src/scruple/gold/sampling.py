@@ -1,4 +1,4 @@
-"""Gold-sample design (plan §8.5).
+"""Gold-sample design (§8.5).
 
 Uniform random sampling is what the §8.6 guarantee rests on, because it is what
 makes the exchangeability assumption true. But 300 uniform items at 3%

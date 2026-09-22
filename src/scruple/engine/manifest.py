@@ -1,4 +1,4 @@
-"""Run manifests (plan §7.3).
+"""Run manifests (§7.3).
 
 Every number in the validation report must be reproducible from files on disk
 (§6, design rule 4), so the manifest records what actually ran -- including the

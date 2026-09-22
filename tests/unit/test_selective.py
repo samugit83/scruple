@@ -1,4 +1,4 @@
-"""Unit tests for selective and labour curves (plan §8.7, §8.8)."""
+"""Unit tests for selective and labour curves (§8.7, §8.8)."""
 
 from __future__ import annotations
 

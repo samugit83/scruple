@@ -1,4 +1,4 @@
-"""Chunking long documents and aggregating passage scores (plan §10.3).
+"""Chunking long documents and aggregating passage scores (§10.3).
 
 Interview transcripts are the headline use case and they routinely exceed a
 backend's state budget, so they are split into passages, scored separately and

@@ -1,4 +1,4 @@
-"""Probability providers (plan §9).
+"""Probability providers (§9).
 
 Swappable by design: the engine is a pure function of (corpus, codebook,
 backend) -> probabilities, and every decision is made downstream in `stats/`.

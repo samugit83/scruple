@@ -1,4 +1,4 @@
-"""The frozen three-way split (plan §8.4).
+"""The frozen three-way split (§8.4).
 
 Partitioned once, deterministically, at `load` time, and recorded in
 `.scruple/splits.json`:

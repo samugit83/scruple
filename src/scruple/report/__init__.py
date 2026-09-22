@@ -1,4 +1,4 @@
-"""Validation report and charts (plan §0.5, §8.8)."""
+"""Validation report and charts (§0.5, §8.8)."""
 
 from .chart import draw_labour_chart, draw_reliability_diagram, most_informative
 from .methods import methods_paragraph

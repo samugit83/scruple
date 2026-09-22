@@ -1,4 +1,4 @@
-"""Split-integrity tests (plan §8.4, §14.4).
+"""Split-integrity tests (§8.4, §14.4).
 
 §14.13 blocks merges when these fail. They are the regression guard for the
 partition that makes every reported number honest.

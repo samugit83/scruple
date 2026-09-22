@@ -1,4 +1,4 @@
-"""Parsing and validating `codebook.yml` (plan §7.1)."""
+"""Parsing and validating `codebook.yml` (§7.1)."""
 
 from __future__ import annotations
 

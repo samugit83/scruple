@@ -1,4 +1,4 @@
-"""Run orchestration (plan §10).
+"""Run orchestration (§10).
 
 The engine is a pure function of (corpus, codebook, backend) -> probabilities
 (§6, design rule 2). It makes no decisions: thresholds and abstention live

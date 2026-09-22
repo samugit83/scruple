@@ -1,4 +1,4 @@
-"""Stratified bootstrap confidence intervals (plan §8.1).
+"""Stratified bootstrap confidence intervals (§8.1).
 
 Resampling is stratified by the gold label. On a rare code an unstratified
 bootstrap routinely draws a resample containing no positives at all, which

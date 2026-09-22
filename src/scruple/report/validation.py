@@ -1,4 +1,4 @@
-"""`validation_report.md` (plan §0.5, §8.9).
+"""`validation_report.md` (§0.5, §8.9).
 
 This file is the actual product. Everything else scruple writes, a competitor
 also writes; this is the part that lets a reviewer decide whether to believe the

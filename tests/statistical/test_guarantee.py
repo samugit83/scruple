@@ -1,4 +1,4 @@
-"""Statistical validity simulation for the §8.6 guarantee (plan §14.6).
+"""Statistical validity simulation for the §8.6 guarantee (§14.6).
 
 This is the most important test in the repository. It does not check that the
 code runs; it checks that the claim the code makes about the world is true.
@@ -212,7 +212,7 @@ def test_negative_control_an_all_negative_coder_is_never_certified(prevalence: f
 def test_miscalibrated_control_does_not_break_risk_control(prevalence: float) -> None:
     """An overconfident coder must never be certified on the strength of its own confidence.
 
-    The plan (§14.6) expected such a coder to be rejected or given conservative
+    §14.6 expected such a coder to be rejected or given conservative
     thresholds. Measurement says something sharper and more reassuring: the
     procedure is simply indifferent to overconfidence, because it tests
     *observed* error counts rather than trusting the stated probability. A

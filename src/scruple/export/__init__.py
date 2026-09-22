@@ -1,4 +1,4 @@
-"""Writers for coded output (plan §5)."""
+"""Writers for coded output (§5)."""
 
 from .writers import (
     FORMATS,

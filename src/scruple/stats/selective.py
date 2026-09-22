@@ -1,4 +1,4 @@
-"""Selective performance and the headline labour curve (plan §8.7, §8.8).
+"""Selective performance and the headline labour curve (§8.7, §8.8).
 
 Two different things live here and must not be confused.
 

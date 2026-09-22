@@ -1,4 +1,4 @@
-"""Unit tests for class-conditional threshold selection (plan §8.6, §14.3).
+"""Unit tests for class-conditional threshold selection (§8.6, §14.3).
 
 The statistical-validity simulation lives in tests/statistical/; what is here
 pins the mechanics: grid ordering, the binomial tail test, the fixed-sequence

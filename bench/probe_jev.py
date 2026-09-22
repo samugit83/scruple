@@ -1,4 +1,4 @@
-"""Record live System One responses as contract-test fixtures (plan §14.7).
+"""Record live System One responses as contract-test fixtures (§14.7).
 
 Run this deliberately, never from the test suite: §14.2 forbids network access
 in every tier, and CI runs with networking disabled. Its job is to capture what

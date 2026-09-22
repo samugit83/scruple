@@ -1,4 +1,4 @@
-"""End-to-end tests over the worked example (plan §14.9).
+"""End-to-end tests over the worked example (§14.9).
 
 The example must run the entire pipeline **offline with no API key**, because
 first-run experience decides adoption and "get an API key first" loses most of

@@ -1,4 +1,4 @@
-"""Engine integration tests (plan §14.8)."""
+"""Engine integration tests (§14.8)."""
 
 from __future__ import annotations
 

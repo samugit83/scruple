@@ -1,4 +1,4 @@
-"""Backend lookup by name (plan §9)."""
+"""Backend lookup by name (§9)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""The backend protocol and shared behaviour (plan §9).
+"""The backend protocol and shared behaviour (§9).
 
 A backend turns (text, codes) into one probability per code. Nothing above this
 layer knows which model produced a number, and nothing below it makes a
