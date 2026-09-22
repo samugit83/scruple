@@ -59,6 +59,9 @@ jobs:
           # someone else's. Scoped to the test steps: checkout and `uv sync`
           # legitimately need the network, and a workflow-level block stops
           # the job before a single test runs.
+          HTTP_PROXY: http://127.0.0.1:9
+          HTTPS_PROXY: http://127.0.0.1:9
+          NO_PROXY: ""
 
   coverage-gate:
     runs-on: ubuntu-latest
@@ -80,6 +83,9 @@ jobs:
           # someone else's. Scoped to the test steps: checkout and `uv sync`
           # legitimately need the network, and a workflow-level block stops
           # the job before a single test runs.
+          HTTP_PROXY: http://127.0.0.1:9
+          HTTPS_PROXY: http://127.0.0.1:9
+          NO_PROXY: ""
       - name: overall coverage
         run: |
           uv run pytest -m "not statistical and not slow" -q \
@@ -92,6 +98,9 @@ jobs:
           # someone else's. Scoped to the test steps: checkout and `uv sync`
           # legitimately need the network, and a workflow-level block stops
           # the job before a single test runs.
+          HTTP_PROXY: http://127.0.0.1:9
+          HTTPS_PROXY: http://127.0.0.1:9
+          NO_PROXY: ""
 
   statistical:
     # The guarantee itself, by simulation. Slow, so it runs on changes to the
@@ -125,6 +134,9 @@ jobs:
           # someone else's. Scoped to the test steps: checkout and `uv sync`
           # legitimately need the network, and a workflow-level block stops
           # the job before a single test runs.
+          HTTP_PROXY: http://127.0.0.1:9
+          HTTPS_PROXY: http://127.0.0.1:9
+          NO_PROXY: ""
 
   performance:
     # §14.12: guards against accidental quadratic behaviour and a cache that is
@@ -146,6 +158,9 @@ jobs:
           # someone else's. Scoped to the test steps: checkout and `uv sync`
           # legitimately need the network, and a workflow-level block stops
           # the job before a single test runs.
+          HTTP_PROXY: http://127.0.0.1:9
+          HTTPS_PROXY: http://127.0.0.1:9
+          NO_PROXY: ""
 
   mutation:
     # §14.10: the guard against tests that execute code without asserting on
